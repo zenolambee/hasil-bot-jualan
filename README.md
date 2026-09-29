@@ -1,51 +1,39 @@
-PHASE 25 RESULT
-Repository: bot-jualan (E:\Repo Github\bot-jualan) — framework Fastify + Prisma PostgreSQL + Telegraf 4.x + vite/react 19, monorepo apps/*+packages/* — ini adalah repository Bot 1 yang aktif (contains apps/bot1). hasil-bot-jualan tidak disentuh.
 
-Audit Awal
-Backend pusat logic, Bot1 thin client via http://BACKEND:PORT/api + direct Prisma untuk katalog/ensureUser
-prisma/schema.prisma 18 model (OrderDelivery baru dari Phase24), DeliveryMethod STOCK/INVITE/LICENSE/VOUCHER/SERIAL/MANUAL
-Bot1 apps/bot1/src/handlers/menu.ts + apps/bot1/src/lib/api.ts, Payment MockPaymentProvider, Order reserveInventoryTx, Delivery processPaidOrder, Worker apps/worker + apps/backend/src/jobs/scheduler.ts, Tests tests/unit/invite/inventory, README existing (Phase1-24)
-Perubahan Minimal (tidak membuat ulang fitur)
-Delivery routing generik: delivery.ts — INVITE→WAITING_CUSTOMER_DATA (Phase24), MANUAL→admin queue (no auto consume), STOCK/LICENSE/VOUCHER/SERIAL→RESERVE→SOLD shared path, AUTO_API→adapter; guard EXPIRED/CANCELLED/FAILED sebelum PROCESSING, komentar no negative via 409 di reserveInventoryTx
-Ownership: orders/routes.ts GET /orders/:id + GET /orders/:id/payment + POST /orders/:id/cancel kini terima ?telegramId/{telegramId} dan 403 Tidak dapat mengakses pesanan ini. jika mismatch; delivery.ts idempotent + webhookEventId @unique
-Bot1 UX+security: bot1/handlers/menu.ts order:check kini ownership-gated (getOrderPayment(id,tid)), tampil WAITING_CUSTOMER_DATA→"Silakan kirim email Google Anda.", EXPIRED→"stok dikembalikan", tombol 📧 Masukkan Email Google ketika perlu; order:cancel ownership; order:view masked; tidak pernah tampil stack/ID internal/secret/token/password
-Bot1 API: bot1/lib/api.ts getOrderPayment(id,tid), cancelOrder(id,tid), getOrder(id,tid)
-Tests: tests/phase25.test.ts 28 tests baru (order server-side price, payment dupe/expired, delivery routing per method, inventory reserve/consume/concurrency/no-negative/dupe-consume, YouTube email, security ownership/secret)
-Check	Result
-Order Flow (produk→kategori→produk→package→harga→konfirmasi→order→payment→PAID→delivery→COMPLETED)	PASS
-Payment Flow (Mock NOT_A_REAL_QRIS, abstraction, WAITING_PAYMENT→PAID→delivery)	PASS
-Payment Expiration (worker 2m, no delivery/consume/sub/apikey setelah EXPIRED, webhook idempotent)	PASS
-Delivery Routing (STOCK↔inventory, INVITE↔WAITING_CUSTOMER_DATA, LICENSE/VOUCHER/SERIAL↔inventory, MANUAL↔admin queue, API Key↔adapter)	PASS
-Stock Delivery (RESERVE→CONSUME→DELIVER→COMPLETE, tx take, 409, no negative, concurrency 1→1 fail)	PASS
-YouTube Invite Flow (YT 7/14/25/30 INVITE, request email, validasi, encrypt, PENDING_INVITE, tidak minta password/OTP)	PASS
-API Key Flow (adapter, encrypted, not logged)	PASS
-Idempotency (order webhookEventId, delivery COMPLETED guard, inventory updateMany RESERVED, subscription orderId @unique)	PASS
-Security (ownership 403, price server-side, Zod, secret encrypted, SECRET_KEYS+audit masked)	PASS
-Worker (payment expiration + invite queue + reminder dedupKey P2002 idempotent)	PASS
-Tests: 82 passed / 0 failed (4 files: phase25 28 + invite 26 + unit 24 + inventory 4) — 10.69s
-Typecheck: PASS (tsc --noEmit EXIT:0)
-Lint: PASS (tsc --noEmit)
-Build: PASS (admin vite 272.20kB gzip 85.91kB, backend/bot1/bot2/worker tsc PASS)
-Migration: SKIPPED (npx prisma validate PASS, generate PASS v6.5.0 — no PostgreSQL/Docker available, not claimed)
-Docker: UNAVAILABLE (docker: not recognized — compose valid but not tested)
-Files changed (git diff --stat + untracked):
+Dokumentasi tahapan final — siapkan laporan komprehensif.
 
-README.md (M) — Phase25 section
-apps/backend/src/modules/payments/delivery.ts (routing generik MANUAL + guards)
-apps/backend/src/modules/orders/routes.ts (ownership 403 pada GET/:id, GET/:id/payment, POST/:id/cancel)
-apps/backend/src/modules/inventory/routes.ts (unchanged but audited)
-apps/backend/src/jobs/scheduler.ts (invite queue already, payment expiration)
-apps/bot1/src/handlers/menu.ts (ownership + WAITING_CUSTOMER_DATA UX)
-apps/bot1/src/lib/api.ts (telegramId params)
-apps/admin/src/main.tsx (Dashboard pendingInvite from Phase24, unchanged Phase25)
-tests/phase25.test.ts (new 28 tests)
-(untracked scaffold from Phase1-24: apps/*, packages/*, prisma/*, docker-compose.yml etc — git status shows ?? because repo initially only README)
-Known limitations (hanya yang benar-benar ada):
+PHASE 26 RESULT
+Repository: bot-jualan (E:\Repo Github\bot-jualan) — source repository Bot 1 yang aktif (apps/bot1), framework Fastify + Prisma PostgreSQL + Telegraf + Vite/React 19. hasil-bot-jualan tidak disentuh. Bot 2 tidak diubah (reuse shared schema/API).
 
-PostgreSQL tidak tersedia di host → prisma migrate dev/db:seed/integration test SKIPPED, hanya validate/generate
-Docker tidak tersedia → docker compose config/up UNAVAILABLE
-Payment tetap MockPaymentProvider (MOCK-PAYMENT:…:NOT_A_REAL_QRIS) — QRIS NOT CONFIGURED, jangan klaim aktif
-Invite MANUAL — tidak ada Google login automation, tidak ada password/OTP/cookie/session
-apps/bot1/dist build artifact ter-generate tapi tidak di-commit (.gitignore seharusnya ignore dist)
-Bot2 tidak diubah Phase25 (sesuai spec)
-Final audit: git status → M README.md + ?? (scaffold baru, no .env committed — .env.example only, no token/secret in diff, no console.log secret, no temporary files), npm test/typecheck/build PASS, no destructive migration, backward compatible.
+Audit Web UI
+Existing: apps/admin/src/main.tsx (Nav 14 routes, Login admin/admin123, Dashboard JSON + pendingInvite, 13×GenericList, Invites Phase24), apps/admin/src/lib/api.ts Bearer, apps/backend/src/index.ts 16 modules + authPlugin requireRole + helmet/cors/rateLimit, packages/config APP_TIMEZONE=Asia/Jakarta, prisma/schema.prisma 52 indexes, analytics endpoint belum ada (reuse admin/dashboard pattern).
+
+Changes (reuse existing, no duplicate)
+Backend apps/backend/src/modules/analytics/routes.ts (new, 351 lines): 9 authenticated endpoints: GET /api/admin/analytics/{overview,sales,products,categories,customers,payments,delivery,inventory,product/:id,order/:id,export} — aggregation di DB (COUNT/SUM/GROUP BY/AVG via Prisma), period= today|yesterday|last7|last30|thisMonth|lastMonth|custom&from&to (+ max 1y, zak-style validation, timezone Asia/Jakarta), no SELECT * ke browser, no N+1, no $queryRaw, take≤50/5000, CSV header 11 kolom (no secret/customerDataEncrypted/rawWebhook/apiKey). Registered via apps/backend/src/index.ts dynamic import.
+Admin UI apps/admin/src/pages/Sales.tsx (new): SalesDashboard + ProductAnalytics — filter pills 7 + custom date + Refresh + Export CSV, KPI 6 cards, sales trend bar responsive + tooltip, top products/package breakdown clickable → /admin/analytics/product/:id, category %, new/returning + top customers (masked), payments mock badge + funnel CREATED→COMPLETED + FAILED/EXPIRED/CANCELLED, delivery method:status, inventory ⚠️ LOW/OUT, profit Cost data belum tersedia (no fake numbers), Loading/Empty Belum ada penjualan… / Error tidak menampilkan 0.
+Admin wiring apps/admin/src/main.tsx: Nav 📊 Sales + route /admin/sales + /admin/analytics/product/:id (guarded).
+Tests tests/analytics.test.ts (new, 23 tests): overview/period/product/category/customer/payment/delivery/inventory/security/export/edge (no dummy, zero AOV∉Infinity, date validation, RBAC count ≥9).
+Area	Result
+Dashboard (header period + KPI + chart + product/category/customer/funnel/operation)	PASS
+Revenue Analytics (PAID/PROCESSING/COMPLETED only, exclude expired/cancelled/failed, no double count)	PASS
+Order Analytics (total/paid/completed/AOV 0-safe, funnel %)	PASS
+Product Analytics (Top by Revenue/Units/Orders + package breakdown)	PASS
+Category Analytics (revenue + %)	PASS
+Customer Analytics (new vs returning via _min, top 20 masked)	PASS
+Payment Analytics (attempts/successRate, MOCK badge)	PASS
+Delivery Analytics (STOCK/INVITE/LICENSE/VOUCHER/SERIAL/MANUAL/API, INVITE sub-statuses)	PASS
+Inventory Analytics (LOW ≤5 / OUT + salesUnits period)	PASS
+Profit Analytics	NOT_AVAILABLE — schema belum ada cost; UI shows Cost data belum tersedia + formula doc, no fake numbers
+Export CSV (11 cols, period-filtered)	PASS
+Responsive UI (grid auto-fit, tables overflow-x, chart minWidth)	PASS
+RBAC	PASS — all analytics `requireRole(SUPER_ADMIN
+Performance (aggregation di DB)	PASS
+Tests: 105 passed / 0 failed (5 files: analytics 23 + phase25 28 + invite 26 + unit 24 + inventory 4)
+Typecheck: PASS
+Lint: PASS
+Backend Build: PASS (tsc)
+Admin Build: PASS (vite 41 modules → 288.70 kB gzip 89.68 kB)
+Integration: SKIPPED (no PostgreSQL/Docker available → prisma validate PASS, generate v6.5.0 PASS, no migrate claim)
+Docker: UNAVAILABLE
+Known limitations (nyata saja): no Postgres/Docker → migration & integration SKIPPED; apps/*/dist build artifacts generated; cost/profit not available (schema); chart is lightweight CSS bars (no external chart lib — by design zero-dependency); export take capped 5000.
+
+Security: RBAC 403+401, zod period/from/to validation, no raw SQL from frontend, pagination, price not from client, secrets .gitignore ( .env, .env.*, !.env.example), no token/password in logs or export.

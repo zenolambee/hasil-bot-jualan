@@ -1,18 +1,67 @@
-PHASE 28 SELESAI ✅
+PHASE 29 STATUS
+Overall: PASS untuk hardening kode dan regression suite. PostgreSQL/Docker integration belum dapat dijalankan karena environment tidak tersedia.
 
-Ringkasan Deliverable
-Admin UI: Subscriptions.tsx baru (KPI status, filter type/status, detail, cancel→release slot) + YoutubeAccounts.tsx (pool KPI, add account, slot chips, activate/deactivate) — routing /admin/subscriptions, /admin/youtube-accounts di main.tsx.
-Analytics: overview additive subscriptions (active/expiring/newInPeriod/renewalRate/byType), invites (pending/sent/completionRate), youtubePool (slots used/total) — KPI strip 5 kartu di SalesDashboard, backward-compatible.
-Migration: prisma/migrations/20250930_phase28_subscription_youtube_pool/migration.sql idempotent non-destructive (enum + 2 tabel + index).
-Tests: tests/phase28.test.ts 31 kasus (schema, konkuransi slot 409, siklus hidup, worker, Bot2, RBAC/audit, keamanan no-credential).
-Fix: youTubeFamily* client naming, null-safety durationDays pada pengiriman pembaruan, tipe targetPkg di rute /me/subscriptions/:id/renew.
-Quality Gates
-Gate	Hasil
-prisma validate/generate	✅ BERLAKU, v6.5.0
-tsc --noEmit	✅ 0 error
-npm test	✅ 171 lulus (7 file)
-npm run build	✅ admin 311 kB (gzip 93.6 kB) + yang lainnya
-Catatan Jujur
-prisma migrate dev belum dijalankan (tidak ada PostgreSQL di host) — jalankan saat DB tersedia.
-QRIS tetap mock (NOT_A_REAL_QRIS), invite tetap MANUAL — tidak ada otomatisasi Google.
-README diupdate (status, tabel 19, Bot2 Phase 28, roadmap M17, testing). Perintah git commit menunggu instruksi Anda.
+Area	Status
+Architecture	PASS
+Bot 1	PASS
+Bot 2	PASS
+Backend	PASS
+Worker	PASS
+Admin	PASS
+Order Integration	PASS berdasarkan audit dan regression tests
+Payment Idempotency	PASS
+Delivery	PASS
+Subscription	PASS
+Renewal	PASS
+YouTube Pool	PASS
+Reminder	PASS
+Analytics	PASS
+Security	PASS
+Tests	180 passed / 0 failed
+Typecheck	PASS
+Lint	PASS
+Build	PASS
+Migration	NOT APPLIED
+PostgreSQL	UNAVAILABLE
+Docker	UNAVAILABLE
+Perubahan utama:
+
+Webhook payment memakai atomic claim dengan updateMany, duplicate event tetap idempotent.
+Signature webhook menggunakan timingSafeEqual.
+Payment polling dan callback Bot 1 memvalidasi ownership Telegram.
+Renewal memakai idempotency key deterministik.
+Renewal hanya memproses order PAID milik subscription yang sesuai.
+Renewal mereset reminderStatus dan menambah renewalCount sekali.
+markInviteSent hanya dapat mengklaim PENDING_INVITE satu kali.
+Pending slot dihubungkan ke subscription setelah invite berhasil.
+Assignment YouTube memakai transaction serializable, ownership check, status check, dan guard duplicate slot.
+Release slot dibuat idempotent dan mengembalikan account FULL menjadi ACTIVE.
+Validasi maxSlots dilakukan sebelum mutation dan perubahan slot dilakukan dalam transaction.
+Reminder menggunakan timezone Asia/Jakarta.
+Dedup reminder menyertakan tanggal expiry sehingga renewal menghasilkan jadwal reminder baru.
+Admin subscription routes diberi RBAC server-side.
+Hardening regression ditambahkan di `tests/phase29.test.ts`.
+Dokumentasi Phase 29 ditambahkan ke `README.md`.
+Quality gates:
+
+npx prisma validate       PASS
+npx prisma generate       PASS
+npm test                  180 passed / 0 failed
+npm run typecheck         PASS
+npm run lint              PASS
+npm run build             PASS
+Build berhasil untuk:
+
+admin
+backend
+bot1
+bot2
+worker
+Known limitations:
+
+npx prisma migrate status gagal dengan P1001 karena PostgreSQL tidak tersedia di localhost:5432.
+Migration Phase 28 tidak diaplikasikan.
+Docker command tidak tersedia di host.
+Payment masih menggunakan mock provider.
+YouTube invite tetap manual; tidak ada pengumpulan password, OTP, cookie, session, atau access token Google.
+Belum ada commit dibuat.

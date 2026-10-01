@@ -1,33 +1,30 @@
-PHASE ADMIN CRUD FINAL
+PHASE REMAINING ADMIN OPERATIONS
 Status: PARTIAL
+Code changes are complete; production readiness is not established.
 
-Core catalog, stock, voucher, YouTube pool, subscription, order, customer, provider and admin operations are implemented. The code-level checks pass, but some existing resources remain intentionally read-only or partial, and database/live integrations could not be verified. Code completion does not mean production readiness.
+Bot Configuration: PARTIAL. Bot 1 is ENV-ONLY. Bot 2 supports an encrypted database token, unless BOT2_TOKEN from the environment takes precedence. Admin status and Bot 2 configuration controls reflect that precedence and indicate that a restart is required. No group-posting setting exists.
 
-Products: PASS
-Packages: PASS
-Providers / API Products: PASS; configuration is encrypted, write-only, and never returned as plaintext.
-Inventory: PASS; filtered and paginated, with encrypted payloads omitted and duplicate stock guarded.
-Vouchers: PASS; validation, status and expiry controls; used vouchers are deactivated rather than deleted.
-YouTube Accounts / Slots: PASS; slot release goes through domain logic; invite delivery remains manual.
-Subscriptions: PASS for search, filters, detail, cancellation and invite retry; no direct date extension.
-Orders: PASS for list, search and detail; transitions remain constrained to backend flows.
-Payment: PASS, read-only. Provider remains MOCK; QRIS is NOT CONFIGURED. Payment settings CRUD is absent from the schema and was not added.
-API Keys: PASS, read-only and masked.
-Other resources: Categories PASS; Customers PASS; Bot configuration PARTIAL; Admin accounts PARTIAL; Notifications PARTIAL/read-oriented.
-Security: PASS for reviewed projections and secret handling.
-RBAC: PASS for reviewed routes and existing role boundaries.
-Tests: 205 passed / 0 failed, 11 files.
-Typecheck: PASS.
-Lint: PASS.
-Build: PASS for Admin, backend, Bot 1, Bot 2 and worker.
-Prisma: PASS (validate, generate; schema unchanged).
-PostgreSQL: SKIPPED/BLOCKED; unavailable at localhost:5432 (P1001).
-Docker: SKIPPED; Docker executable unavailable.
-Telegram live: SKIPPED; no live session/credentials verified.
-YouTube invite: MANUAL.
+Admin Accounts: PASS. Added searchable and filterable list, detail, create, profile/role edits, and account activation/deactivation. Passwords use existing bcrypt hashing and are not returned. Self-role changes and escalation to SUPER_ADMIN are blocked; the last active SUPER_ADMIN is protected.
 
-Production readiness remains blocked on verified database/migrations and unavailable external integrations. README includes the resource status and verification results.
+Notifications: PARTIAL. Admin can search, filter, paginate, and inspect safe notification details. Read/unread and generic retry are unsupported by the schema. Bot 1 now sends to the actual user before acknowledging delivery; delivery endpoints require INTERNAL_WORKER_TOKEN. Bot 2 delivery and live Telegram delivery remain unverified. Reminder deduplication and the existing Asia/Jakarta schedule were preserved.
 
-Commit: 573978d (feat: complete admin crud and final hardening)
+Security: Reviewed bot, admin, and notification projections for secret and encrypted-data leakage. Delivery errors are not persisted as provider error text.
+
+RBAC: PASS for the reviewed operations. Active role is refreshed from the database for each authenticated request.
+
+Tests: 210 passed / 0 failed (12 files)
+Typecheck: PASS
+Lint: PASS
+Build: PASS
+Prisma: PASS (validate; schema unchanged)
+PostgreSQL: BLOCKED (localhost:5432, P1001)
+Docker: SKIPPED (unavailable)
+Telegram: SKIPPED (no live credentials/session)
+Payment: MOCK / NOT CONFIGURED
+YouTube Invite: MANUAL
+
+Commit: 0ec8af2 (feat: complete remaining admin operations)
 Push: NO
-Worktree: clean.
+Worktree: clean
+
+Remaining blockers: Verify against PostgreSQL and live Telegram credentials; Bot 2 notification delivery is not verified. The project is not production-ready based on code checks alone.

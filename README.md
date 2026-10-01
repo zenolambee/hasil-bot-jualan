@@ -1,58 +1,27 @@
-PHASE 30B–30E STATUS
-Status
-Subphase	Status
-30B Main Menu Bot 1	PASS
-30C Product Detail & Buy UI	PASS
-30D Order & Payment UI	PASS
-30E Production Readiness	CODE PASS
-Changes
-Out-of-stock package tidak lagi menampilkan tombol Beli Sekarang.
-Callback pembelian berulang untuk user dan SKU yang sama ditahan selama request pertama masih berjalan.
-Backend idempotency tetap menjadi authority utama.
-Product detail tetap menggunakan data asli:
-nama produk
-deskripsi
-paket
-harga
-durasi
-delivery method
-inventory aktual
-Main menu tetap hanya memakai fitur yang tersedia.
-Tidak menambahkan Categories karena Bot 1 belum memiliki category flow.
-Tidak menambahkan Deposit, Wallet, Saldo baru, Referral, atau Freebies.
-Health endpoint sekarang membedakan:
-healthy jika database tersedia
-degraded jika database tidak tersedia
-Production mode menolak fallback development untuk:
-ENCRYPTION_KEY
-JWT_SECRET
-Worker expiry dan full job loop tetap berjalan menggunakan implementation existing.
-Migration Phase 28 diperiksa dan tidak diubah.
-Laporan ditambahkan ke `README.md`.
-Verification
-npx prisma validate       PASS
-npx prisma generate       PASS
-npm test                  194 passed / 0 failed
-npm run typecheck         PASS
-npm run lint              PASS
-npm run build             PASS
-Build berhasil untuk:
+FINAL STATUS
+Phase 24–30 source audit, fixes, and static verification are complete. Production readiness is still blocked, so I am not marking PHASE FINAL CODE COMPLETION = PASS.
 
-admin
-backend
-bot1
-bot2
-worker
-Test suite mencakup 10 test files, termasuk:
+Repository / branch: zenolambee/bot-jualan, main
+HEAD: 7f21713b33396eb0b79af64222f3aaa1d7464606 (audit changes are uncommitted)
+Tests: 197 passed / 0 failed, 10 files
+Typecheck / lint / build: PASS; all five workspaces build
+Prisma validate / generate: PASS
+PostgreSQL: SKIPPED; localhost:5432 unavailable (P1001), so migration status/application could not be verified
+Docker: SKIPPED; Docker executable unavailable
+Security: PASS for static scan; .env is ignored and untracked, and generated build files were removed from the worktree
+Bot 1 / Bot 2 / Admin / Worker: Code paths audited; static checks pass. Live Telegram flow was not available to test.
+Payment / QRIS: MOCK / NOT CONFIGURED
+YouTube invite: MANUAL
+Key fixes
+Fixed renewal double-extension and restricted renewal mutation to the payment-delivery path; corrected manual delivery so it stays pending until an administrator completes it; tightened invite state handling, subscription expiry reminders, and cancellation/slot-release transactions. Customer/admin response projections were narrowed to avoid leaking HPP, encrypted invite data, or raw webhook payloads. Configuration examples and Docker Compose now use explicit placeholders/credentials. Regression tests were added or updated, and the verified status is recorded in README.md.
 
-Phase 24–29 regression tests
-Phase 30A catalog tests
-Phase 30B–30E readiness tests
-External Integration
-Check	Status
-PostgreSQL integration	SKIPPED: localhost:5432 unavailable
-Migration application	NOT APPLIED
-Docker smoke test	SKIPPED: Docker unavailable
-Live Telegram test	SKIPPED: no live bot session/token
-Real payment integration	SKIPPED: provider remains mock
-hasil-bot-jualan tidak ditemukan di workspace lokal, sehingga report dicatat di README repository source. Tidak ada push ke GitHub
+Production blockers
+No official payment provider or real QRIS integration is configured.
+PostgreSQL availability and migrations have not been verified against a running database.
+Docker deployment could not be smoke-tested on this host.
+Several Admin CRUD screens remain incomplete operational editors.
+Live Telegram behavior remains unverified without configured bot credentials.
+Changed files
+.env.example, Dockerfiles, docker-compose.yml, README.md; Admin UI; backend configuration, scheduler, invite/order/payment/subscription/analytics/admin/provider/inventory/voucher/YouTube routes; Bot 1 and Bot 2 handlers/API clients; worker jobs; Prisma seed; and Phase 25, 28, 29, and 30B–30E tests.
+
+No commit or push was performed.

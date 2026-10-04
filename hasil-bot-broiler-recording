@@ -1,3 +1,53 @@
+
+
+
+
+
+
+
+
+
+FASE INPUT DATA STANDAR ABW — SELESAI
+Hasil pengecekan
+Check	Hasil
+npm run typecheck	✅ Pass
+npm run lint	✅ Pass
+Test target (abw + day-sampling + seluruh file terkait)	✅ 25/25 pass
+npm test (full)	Sama dengan baseline — 3 file gagal pre-existing (SQLite lease + EPERM Windows, bukan dari perubahan ini)
+npm run build	✅ Pass
+git diff --check	✅ Clean
+Perubahan
+config/abw-standard.ts — kini SINGLE SOURCE OF TRUTH:
+
+65 entri referensi (umur 1 = 56 g s.d. umur 65 = 5095 g), persis dari tabel Anda — tidak diubah
+Angka ribuan disimpan sebagai number (mis. 1069, bukan string "1,069")
+abwStandardFor(ageDay): umur di luar 1–65 → undefined (status "belum tersedia", tanpa error pembagian)
+lib/recording/abw.test.ts (17 test) — semua kasus wajib lolos:
+
+AGE 1 = 56, AGE 25 = 1418, AGE 35 = 2390, AGE 50 = 3867, AGE 65 = 5095 ✅
+Umur 0, −5, 66, 100, 2.5 ditangani aman ✅
+Contoh wajib: umur 25, aktual 1350 → selisih −68, pencapaian 95.20%; aktual 1500 → +82, 105.78% ✅
+deriveAbwFields memakai tabel referensi; ABW aktual tetap dari sampling 1–3 ✅
+Dokumen di-update (DATA_MODEL, DAILY_RECORDING, README, TELEGRAM) mencerminkan tabel terisi. Schema Google Sheets tidak diubah. Angka standar tidak dimodifikasi oleh sampling. Tidak ada commit/push.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 IMPLEMENTASI SELESAI
 Hasil pengecekan
 Check	Hasil

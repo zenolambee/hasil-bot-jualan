@@ -1,0 +1,23 @@
+IMPLEMENTASI SELESAI
+Hasil pengecekan
+Check	Hasil
+npm run typecheck	✅ Pass
+npm run lint	✅ Pass
+Test (file target: recording/sampling/sheets/telegram/reporting)	✅ 102/102 pass
+npm test (full suite)	30/33 file pass — 3 file gagal adalah baseline pre-existing (SQLite lease + temp-dir EPERM di Windows, diverifikasi identik via git stash sebelum perubahan)
+npm run build	✅ Pass
+git diff --check	✅ Clean
+File dibuat (6)
+config/abw-standard.ts — tabel standar ABW keyed umur, kosong (tidak mengarang angka), siap diisi
+lib/recording/abw.ts — computeDayAbw, deriveAbwFields, computeFeedPerBird, round2
+lib/recording/abw.test.ts (13 test), lib/sampling/day-sampling.test.ts (8 test), lib/telegram/day-sampling-flow.test.ts (6 test), lib/telegram/recovery-slots.ts
+File diubah (30 termasuk docs)
+types: DaySampling {count,totalWeight} + DailyRecording ≈ afkirCount, sampling1/2/3, abwStandar, abwSelisih, abwPencapaian, feedPerBird, cost
+recording: closing = opening − afkir − mati − jual; ABW derive otomatis
+sampling: previewDaySampling + setDaySampling — batch ACTIVE, recording harus ada, slot 1–3, Σcount ≤ populasi, 10–15 ekor = warning saja
+sheets: 9 kolom baru di-append setelah updatedAt → mapping kolom lama (0–16) tidak bergeser; baris lama tetap terbaca (afkir blank = 0); fix bug header >26 kolom (initializeSheets)
+telegram: parser Sampling N X ekor Y gram (case-insensitive, desimal koma/titik) saat idle → batch aktif → tanggal bisnis otomatis → konfirmasi → durable mutation SAMPLING_SESSION; re-send = replace slot di recording yang sama; recovery handler baru
+Contoh ABW (test wajib, lolos)
+Sampling 1 (10/1000) + 2 (10/3000) + 3 (10/3300) → 30 ekor, 7300 g, ABW = 243,33 g; standar terdaftar → selisih/pencapaian terisi; standar kosong → "belum tersedia" tanpa error.
+
+Tidak ada commit/push/perubahan Vercel. Catatan deploy: jalankan ulang npm run initialize:sheets agar header baru ditulis.

@@ -7,6 +7,39 @@
 
 
 
+Rantai penyebab:
+
+package.json punya "type": "module" → Node runtime Vercel mengeksekusi dist/api/health.js sebagai native ESM.
+Native ESM mewajibkan ekstensi pada relative import — source pakai gaya extensionless (from "../lib/http").
+tsconfig pakai moduleResolution: "Bundler" (typecheck lolos), dan rewriteRelativeImportExtensions hanya me-rewrite import berakhiran .ts — import extensionless di-emit verbatim tanpa ekstensi.
+Node ESM gagal resolve → throw saat load → semua endpoint mati sebelum handler sempat jalan → FUNCTION_INVOCATION_FAILED.
+Perbaikan: emit CommonJS untuk dist. CJS require me-resolve extensionless secara native, jadi tanpa mengubah satu baris business logic pun.
+
+File yang diubah (minimal)
+package.json — hapus "type": "module"; build → tsc -p tsconfig.build.json. (@vercel/node devDependency tidak masuk dist — karena Vercel men-deploy raw dist/, tsc emit CJS yang di-require langsung Node runtime.)
+tsconfig.build.json (baru) — extend tsconfig.json, override: noEmit: false, outDir: "dist", module: commonjs, moduleResolution: node, verbatimModuleSyntax: false, skipLibCheck: true; exclude scripts/ (top-level await, hanya utility lokal) dan 3 file *.test.ts di bawah api/+app/ (tidak boleh jadi function). Semua test lain tetap ter-emit seperti sebelumnya.
+eslint.config.js → eslint.config.mjs — rename cosmetik agar manifestasi ESM eksplisit setelah type: module dihapus (menghilangkan warning reparsing).
+vercel.json tidak diubah, setting dashboard tidak diubah, env tidak diubah.
+
+Bukti perbaikan (simulasi runtime Vercel)
+dist/api/health.js → CJS LOAD OK, handler: function
+STATUS: 200
+BODY: {"ok":true}
+
+dist/api/telegram/webhook.js → WEBHOOK LOAD OK, handler: function
+Hasil check
+Check	Hasil
+npm run typecheck	PASS
+npm run lint	PASS (0 error, 0 warning)
+npm run build	PASS → dist/api/health.js, dist/api/telegram/webhook.js + seluruh lib/
+npm test	31/34 file pass (243/271); 28 fail = pre-existing Windows SQLite/EPERM (sqlite-store, lease, router-durable) — baseline identik via git stash, bukan regression
+git diff --check	PASS
+Apakah /api/health sekarang mengembalikan {"ok":true}?
+Ya — terverifikasi lokal memanggil handler CJS hasil build: status 200, body {"ok":true}, security headers lengkap. Setelah push + redeploy, https://broiler-recording-vert.vercel.app/api/health seharusnya {"ok":true}; segmen Telegram webhook juga load OK (cold-start sukses; kini tinggal tergantung env Sheets/Telegram yang valid).
+
+
+
+
 
 
 

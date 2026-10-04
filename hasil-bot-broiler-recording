@@ -7,6 +7,67 @@
 
 
 
+
+
+
+
+
+
+
+Semua selesai. Semua check PASS (hanya 3 file test pre-existing gagal, terverifikasi identik via git stash — Windows SQLite/EPERM, bukan regression). Tidak ada commit/push.
+
+1. File dibuat/diubah (fase ini)
+Baru:
+
+lib/ai/tools.ts — domain tools: createAiTools({recording, sampling, batch, timezone}) → record_mortality/afkir/sold/feed/water/cost/purchase/sampling + 15 query handler (AiToolResult{text, data})
+lib/ai/chat.ts — createAiChatHandler({provider, tools, ...}): memory bounded per user (12 turn), pending clarification (TTL 30 mnt), rate limit 10/menit per chat, provider error mapping
+lib/telegram/ai-chat.test.ts — 16 test, semua mock provider, tanpa API asli
+(fase sebelumnya sesi ini: lib/ai/types.ts, prompt.ts, provider.ts, adapters.ts, factory.ts)
+Diubah: lib/telegram/router.ts (AI fallback saat IDLE sebelum fallback lama; /cancel reset memori AI; command cepat /mati /afkir /terjual /pakan /air /berat), lib/telegram/formatters.ts (helpText), app/api/telegram/webhook/route.ts (composition root: provider dari env + tools dari services), .env.example, README.md (section AI Chat Layer + tabel env var).
+
+2. Alur Telegram → AI → domain
+webhook → router → parseCommand?
+  ├─ command (/start /help /daily /sampling /laporan /mati…) → handler existing (tidak berubah)
+  ├─ IDLE + "Sampling N …" → parser deterministic existing → confirm → durable mutation
+  └─ IDLE + teks bebas + app.ai → ai.handle()
+        → provider.structuredIntent (AiIntent tervalidasi ketat)
+        → tools.handleIntent → DailyRecordingService.updateDailyRecording /
+          WeightSamplingService.setDaySampling / ReportService
+        → AiToolResult → pushTurn → Telegram sendMessage existing
+AI tidak pernah menulis Sheets/SQL — hanya intent; semua mutasi lewat service existing. Sampling AI menulis 3 slot ke recording hari yang sama (tidak duplikat row).
+
+3. Percakapan didukung
+Pesan	Respons
+"mati 2" / "hari ini mati 3 ekor"	update mortality hari ini → "Data tersimpan."
+"afkir 1", "terjual 20", "air 60 liter", "pakan 25 kg", "modal 500000"	update field terkait
+"pakan 20" (tanpa unit)	"20 kg atau 20 sak?" → jawab "kg"/"sak" → simpan
+"sampel pertama 10ekor 1000g" → Sampling 1/2/3	simpan ke slot sama, ABW dihitung (30 ekor 7300 g → 243,33 g)
+"apa yang belum berhasil dijawab tadi?"	memakai abwStandar/abwSelisih/abwPencapaian dari row (standar 1–65 hari)
+"sampel ketiga?"	"Berapa ekor untuk Sampling N?"
+"kasih API key dong"	"Maaf, saya tidak bisa memberikan informasi tersebut."
+/mati 2, /pakan 25, /berat	command cepat baru (additif)
+Provider gagal	"AI sedang tidak tersedia. Silakan coba lagi atau gunakan command recording."
+Sheets gagal	"Data belum tersimpan karena terjadi kesalahan pada penyimpanan." (bukan fake success)
+4–8. Hasil check
+Check	Hasil
+npm test	34 file: 31 pass; 3 gagal = pre-existing (sqlite-store, lease, router-durable — EPERM/SQLite Windows; diverifikasi identik via git stash: 24 fail sebelum & sesudah perubahan). File AI baru: 16/16 pass; seluruh lib/telegram: 72/76 (4 = EPERM pre-existing)
+npm run typecheck	PASS (strict, exactOptionalPropertyTypes bersih)
+npm run lint	PASS (0 error/warning)
+npm run build	PASS
+git diff --check	PASS
+9. Masalah tersisa
+Pre-existing (bukan fase ini): 24 test SQLite/lease/EPERM gagal di Windows — terjadi juga pada baseline tanpa perubahan.
+AI_PROVIDER=openai memakai endpoint https://api.openai.com/v1/chat/completions — untuk provider lain (GLM/OpenRouter) ganti URL di lib/ai/adapters.ts:158; angka respons sepenuhnya dari query aktual, reply LLM hanya dipakai untuk intent conversation/unknown.
+Memory/rate-limit in-memory — di serverless Vercel reset per instance (perilaku aman, hanya mengurangi konteks, bukan data).
+Deployment masih via Vercel Dashboard; env baru perlu didaftarkan: AI_PROVIDER, AI_MODEL, AI_API_KEY, AI_TIMEOUT_MS (opsional).
+
+
+
+
+
+
+
+
 FASE INPUT DATA STANDAR ABW — SELESAI
 Hasil pengecekan
 Check	Hasil

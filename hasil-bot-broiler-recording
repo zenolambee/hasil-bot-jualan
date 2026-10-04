@@ -10,7 +10,38 @@
 
 
 
+1. File yang diubah
+vercel.json — satu-satunya file. package.json tidak diubah (script build sudah benar; yang bikin Vercel salah duga adalah script itu di-auto-jalankan tanpa deklarasi output).
+2. Isi final vercel.json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
+3. Perubahan package.json
+Tidak ada. Arsitektur functions (api/health.ts, api/telegram/webhook.ts + functions modern, tanpa legacy builds) sudah benar dan tidak disentuh.
 
+4. Hasil check
+Check	Hasil
+npm run typecheck	PASS
+npm run lint	PASS
+npm run build	PASS — dist/ berisi api/ app/ config/ lib/ scripts/
+npm test	31/34 file pass; 3 file gagal = pre-existing Windows SQLite/EPERM (sqlite-store, lease, router-durable; 28 test) — persis sama dengan baseline sebelum perubahan apa pun, diverifikasi via git stash sebelumnya. Bukan regression, tidak diubah.
+git diff --check	PASS
+5. Kenapa error "No Output Directory named public" diperbaiki
+Dokumentasi Vercel: dengan preset Other dan field dashboard kosong (override OFF), Vercel auto-menjalankan build script dari package.json, lalu menuntut static output directory (default public); fallback ke root . hanya berlaku saat build step di-skip. Karena npm run build menghasilkan dist/ — bukan public/ — build gagal. Perbaikan di vercel.json:
+
+buildCommand: "npm run build" → eksplisit, menimpa auto-deteksi/race dengan dashboard
+outputDirectory: "dist" → menunjuk output nyata dari build (bukan folder baru, bukan trik public)
+framework: null → mengunci preset "Other" agar deteksi framework tidak pernah mengubah asumsi build
+functions tetap (konfigurasi modern, bukan legacy builds)
+Langkah terakhir di dashboard (tanpa CLI): redeploy project — vercel.json di repo akan meng-override setting build. Karena dashboard sekarang konflik dengan repo config, pastikan toggle Override di Build & Deployment Settings dimatikan agar vercel.json yang berlaku
 
 
 

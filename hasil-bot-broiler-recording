@@ -8,6 +8,38 @@
 
 
 
+
+
+
+
+
+
+
+Laporan Test Ulang
+Hasil
+LOCAL TEST PASSED
+
+Environment validation: PASS
+Telegram environment: PASS
+Google Sheets configuration: PASS
+Google Sheets client: PASS
+Repositories/services: PASS
+Operation Ledger: PASS
+Recovery Worker: PASS
+AI Provider: PASS
+Telegram service: PASS
+Telegram Router: PASS
+Webhook handler: PASS
+sheets-read: PASS (probe read-only A1:A1 sukses — akses service account kini valid)
+webhook: PASS — simulasi POST /api/telegram/webhook dengan /start + header secret → HTTP 200 {"ok":true}
+Error: tidak ada
+Test suite
+npm run typecheck ✅ · npm run lint ✅ · npm run build ✅
+npm test: 244 pass / 28 fail = baseline pre-existing Windows EPERM (tidak terkait)
+Tidak ada deploy, tidak ada ubah Vercel, tidak ada commit/push, tidak ada credential tampil. git status hanya ?? scripts/diagnose-local-webhook.ts — .env.local tetap untracked.
+
+Kesimpulan: ENV + aplikasi valid penuh di laptop. Penyebab 503 production adalah akses Sheets yang kini sudah Anda perbaiki — silakan test /start langsung dari Telegram ke production.
+
 Laporan Test Local Env
 Hasil utama
 LOCAL TEST FAILED

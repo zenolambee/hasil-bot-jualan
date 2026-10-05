@@ -4,6 +4,38 @@
 
 
 
+
+
+
+
+
+
+
+Laporan Auto Daily by Batch Age
+File yang diubah (4 file)
+lib/recording/service.ts — method baru ensureDailyRecording(batchId, date, update): ada → update; belum ada → create dengan default nol. Validasi/gap/ageDay/opening tetap milik engine lama (createDailyRecording).
+lib/ai/tools.ts — updateToday auto-create (bukan pesan /daily); pesan gap baru "Recording sebelum {date} belum tersedia. Lengkapi tanggal yang terlewat terlebih dahulu, lalu ulangi."; record_sampling auto-ensure recording hari berjalan; hapus recordingNotFoundReply (dead export, tak dipakai di mana pun).
+lib/ai/auto-daily.test.ts — (baru) 11 regression test.
+lib/telegram/ai-chat.test.ts — stub recording + ensureDailyRecording (maintenance wajib).
+Router (handleQuickRecord) dan flow /daily (pakai createDailyRecording) tidak diubah — satu engine untuk semua.
+
+Perilaku (sesuai contoh wajib)
+Batch 2026-10-02/1000 ekor + recording hari-1 ada → /mati 3 tgl 2026-10-03: ageDay 2, opening 1000, mortality 3, closing 997. Command kedua di tanggal sama update row yang sama (tanpa duplikat). Hari sebelumnya kosong → tolak dengan pesan jelas (tanpa sebut /daily). /afkir /terjual /pakan(kg) /air + sampling mengikuti pola sama; sampling tetap satu row per tanggal.
+
+Regression test (11/11 PASS)
+mati hari-ke-2 ✓ · ageDay dari startDate ✓ · opening dari closing kemarin ✓ · update-sehari-tanpa-duplikat ✓ · afkir/terjual/pakan/air ✓ · gap ditolak + tanpa row baru ✓ · engine sama dengan /daily manual ✓ · sampling auto-create ✓ · sampling gap ditolak ✓ — semua tanggal dinamis via businessDate(timezone), tanpa ketergantungan pesan /daily.
+
+typecheck/lint/build/npm test
+typecheck ✅ · lint ✅ · build ✅ · npm test: 266 pass / 28 fail = baseline pre-existing Windows EPERM (file lease, sqlite-store, router-durable yang sama). Schema Sheets tidak berubah; flow batch_create utuh (test-nya tetap hijau).
+
+Commit & push
+SHA 92e5614 — "feat: auto-create daily recording by batch age for quick commands and sampling"
+Push 9cbe785..92e5614 main -> main
+
+
+
+
+
 File yang diubah (2 file)
 lib/telegram/router.ts — 1 baris di BATCH_CREATE_NOTES: value === "-" → trimmed === "" || trimmed === "-" ? undefined : value
 lib/telegram/batch-create-notes.test.ts — (baru) 4 regression test

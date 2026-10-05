@@ -16,7 +16,31 @@
 
 
 
+Audit ENV vs 503 Webhook (tanpa ubah file, tanpa commit)
+Konteks eksekusi: POST /api/telegram/webhook di production (VERCEL_ENV=production) → validateProductionEnvironment() → telegramEnvironment() → guard secret/header (401 bila mismatch) → configuredRouter() (Sheets config → Google client → ledger → AI provider → router). Setiap throw → catch → 503. Fakta ~200ms + tanpa outgoing = gagal sebelum network call pertama — di validasi env atau setup configuredRouter().
 
+Daftar ENV
+ENV	Fungsi	Wajib Production	Indikasi 503
+TELEGRAM_BOT_TOKEN	Token panggil Telegram API (dipakai saat sendMessage, bukan saat validasi isi)	Ya (non-kosong; kosong → 503)	Tinggi jika kosong; jika terisi tapi salah → gagal setelah outgoing, bukan kasus ini
+TELEGRAM_ALLOWED_USER_IDS	Daftar user ID boleh pakai bot	Ya (non-kosong; kosong → 503)	Tinggi jika kosong; isi salah format → tidak throw (bot balas "tidak memiliki akses", ada outgoing)
+TELEGRAM_WEBHOOK_SECRET	Validasi header x-telegram-bot-api-secret-token	Ya (kosong → 503)	Tinggi jika kosong; beda dengan secret_token saat setWebhook → 401, bukan 503
+TELEGRAM_CALLBACK_SECRET	Secret tombol callback	Ya (kosong → 503)	Sedang — hanya dicek keberadaannya
+GOOGLE_SHEETS_SPREADSHEET_ID	ID spreadsheet data	Ya (kosong → 503 via Sheets config)	Tinggi jika kosong
+GOOGLE_SERVICE_ACCOUNT_EMAIL	Email service account	Ya (kosong → 503)	Tinggi jika kosong
+GOOGLE_PRIVATE_KEY	Private key service account (\n dinormalisasi otomatis)	Ya (kosong → 503)	Tinggi jika kosong; isi malformed → gagal saat API call (ada outgoing), bukan kasus ini
+OPERATION_LEDGER_PATH	Path file SQLite durable ledger (selalu aktif di production)	Ya (kosong → 503; path tak-bisa-ditulis, mis. bukan /tmp, → SQLite open gagal → 503 tanpa outgoing)	Tinggi — pastikan menunjuk lokasi writable (/tmp/...)
+AI_PROVIDER	Pilih provider (local-rules default bila kosong)	Tidak wajib (default aman)	Tinggi jika diisi selain local-rules/openai — template .env.example menulis openai-compatible, nilai itu ditolak (Unknown AI provider) → 503; openai tanpa AI_API_KEY → 503
+AI_API_KEY	Kunci provider OpenAI	Hanya jika AI_PROVIDER=openai	Sedang (skenario di atas)
+AI_MODEL	Model opsional	Opsional	Bukan penyebab
+AI_TIMEOUT_MS	Timeout AI (default 20000)	Opsional	Bukan penyebab
+OPERATION_LEDGER_BUSY_TIMEOUT_MS	Timeout SQLite lock	Opsional	Rendah — throw hanya jika diisi bukan integer positif
+APP_TIMEZONE	Timezone (default Asia/Jakarta, tidak dibaca dari env)	Tidak dipakai	Bukan penyebab
+TELEGRAM_WEBHOOK_URL	Hanya untuk script set-webhook, tidak dibaca runtime	Tidak (runtime)	Bukan penyebab 503
+Prioritas cek di Vercel
+Kedelapan var wajib ada dan non-kosong (kosong = 503): token, allowed IDs, webhook secret, callback secret, spreadsheet ID, service email, private key, ledger path.
+OPERATION_LEDGER_PATH menunjuk path writable (/tmp/...).
+AI_PROVIDER kosong/local-rules, atau openai + AI_API_KEY terisi — jangan openai-compatible.
+TELEGRAM_WEBHOOK_SECRET Vercel sama persis dengan secret_token saat setWebhook (mismatch → 401, bukan 503 — tetap wajib dicek).
 
 
 

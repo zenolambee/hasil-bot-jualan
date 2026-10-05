@@ -10,7 +10,25 @@
 
 
 
+Hasil Test 7 Command (HTTP semua 200 — error asli tertangkap logging sementara)
+Command	Result	Error
+/status	FAIL	SheetsError: Google Sheets request contains an invalid range. (via GoogleSheetsBatchRepository.list, repositories.ts:37)
+/mati 2	FAIL	SheetsError: Google Sheets request contains an invalid range. (via updateToday → activeContext → BatchRepository.list)
+/afkir 1	FAIL	sama — SheetsError: invalid range via BatchRepository.list
+/terjual 20	FAIL	sama — SheetsError: invalid range via BatchRepository.list
+/pakan 25	FAIL	sama — SheetsError: invalid range via BatchRepository.list
+/air 60	FAIL	sama — SheetsError: invalid range via BatchRepository.list
+/berat	PASS	-
+Stack lengkap (nama+pesan+lokasi, tanpa credential) tercatat untuk tiap command yang FAIL — semuanya satu akar: read range Batches!A2:... → Google 400 invalid range.
 
+Error asli yang disembunyikan telegramError()
+Tab domain Batches (dan kemungkinan DailyRecording, WeightSampling, MasterKandang, MasterPakan, MasterConfig) belum ada di spreadsheet — spreadsheet belum diinisialisasi. (/start lolos karena tidak baca tab domain; tab TelegramConversation/TelegramIdempotency dibuat otomatis via ensureSheet; tab domain tidak.)
+
+Yang belum dilakukan (butuh persetujuan Anda)
+Perbaikan = menjalankan npm run initialize:sheets (membuat tab + header yang hilang; idempoten, tanpa ubah kode). Saya belum menjalankannya karena menulis ke spreadsheet produksi. Konfirmasi untuk lanjut — setelah itu test 7 command diulang.
+
+Checks & kebersihan
+typecheck ✅ · lint ✅ · build ✅ · npm test 244 pass / 28 fail (baseline pre-existing Windows EPERM) · logging sementara sudah di-revert (git diff bersih, hanya ?? scripts/diagnose-local-webhook.ts untracked seperti sebelumnya) · tidak ada commit/push/deploy.
 
 
 

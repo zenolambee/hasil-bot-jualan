@@ -5,6 +5,53 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Laporan Webhook Telegram Production
+Hasil pemeriksaan
+Production READY (commit fb7122d), /api/health → {"ok":true} (terverifikasi langsung).
+Token tidak ada di laptop: tidak ada file .env, env shell kosong. Sesuai pilihan Anda, set webhook dilakukan manual oleh Anda — saya tidak menyentuh/menampilkan token sama sekali.
+Endpoint valid: POST /api/telegram/webhook — non-POST ditolak 405; di production memvalidasi env wajib (TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_USER_IDS, TELEGRAM_WEBHOOK_SECRET, TELEGRAM_CALLBACK_SECRET, Sheets, OPERATION_LEDGER_PATH) lalu cek header secret → 401/503 jika tak cocok. Artinya: kalau webhook URL benar tapi env Vercel belum lengkap, bot tetap diam.
+Bukan masalah auth user: user tak-terdaftar tetap dibalas "Anda tidak memiliki akses." — jadi diam total = update tidak sampai ke Vercel (webhook belum di-set / salah URL / secret mismatch).
+Tidak ada perubahan file (git status bersih), typecheck PASS.
+Panduan set manual (ganti <TOKEN> dan <SECRET> dengan nilai Anda, jangan bagikan ke saya)
+Set webhook (satu baris, pastikan URL persis ini): https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://broiler-recording-vert.vercel.app/api/telegram/webhook&secret_token=<SECRET>&drop_pending_updates=true
+<SECRET> harus sama persis dengan TELEGRAM_WEBHOOK_SECRET di Vercel env, kalau tidak semua update ditolak 401. Kalau Vercel belum punya secret itu, tambahkan dulu lalu redeploy.
+Verifikasi: https://api.telegram.org/bot<TOKEN>/getWebhookInfo
+Kirim kembali ke saya hanya: url, pending_update_count, last_error_date, last_error_message (jika ada).
+Setelah itu
+Test /start dari Telegram user ID yang terdaftar di TELEGRAM_ALLOWED_USER_IDS Vercel.
+Kalau last_error_message muncul (mis. 401/503/timeout), laporkan pesannya — saya audit endpoint tanpa ubah kode, dan tidak commit/push apa pun sebelum Anda setujui.
+
+
+
+
+
+
 Laporan Perbaikan Runtime Vercel
 1. Root cause sebenarnya
 Dari audit source @vercel/node v5.10.2 yang ter-install (bukan asumsi):

@@ -5,6 +5,52 @@
 
 
 
+Laporan Perbaikan Runtime Vercel
+1. Root cause sebenarnya
+Dari audit source @vercel/node v5.10.2 yang ter-install (bukan asumsi):
+
+Build: registerNativeCompiler mencari tsconfig.json dari dir entrypoint ke atas (findConfigFile), lalu menulis temp config yang extends root tsconfig.json project. Override-nya hanya noEmit:false, outDir, rootDir, sourceMap, noCheck, rewriteRelativeImportExtensions — module/moduleResolution TIDAK dioverride → diambil dari root (module: ESNext + verbatimModuleSyntax) → function di-emit sebagai ESM.
+Runtime (bundling-handler.js): menjalankan hasil compile SOURCE api/health.ts via dynamic import() + unwrapDefaults — bukan dist/.
+ESM berisi import { jsonResponse } from "../lib/http" (extensionless) → gagal resolve → Failed to load the ES module → 500 FUNCTION_INVOCATION_FAILED. Karena itu fix dist sebelumnya tidak berpengaruh.
+2. Arsitektur deployment yang dipilih
+A. Vercel langsung menangani api/*.ts source sebagai Vercel Functions (tanpa campur B). dist/ hanya artefak samping untuk memenuhi outputDirectory — bukan entrypoint function.
+
+3. File yang diubah
+tsconfig.json — module: commonjs, moduleResolution: node; hapus verbatimModuleSyntax & rewriteRelativeImportExtensions; scripts dikeluarkan dari include; skipLibCheck: true.
+tsconfig.scripts.json (baru) — typecheck script (esnext/bundler + allowImportingTsExtensions untuk import .ts eksplisit di scripts).
+package.json — typecheck = root + scripts.
+scripts/initialize-sheets.ts, scripts/telegram-webhook.ts — top-level await dibungkus async main() (satu-satunya perubahan kode; bukan business logic).
+tsconfig.build.json — dirapikan (tidak lagi campur A+B): hanya noEmit:false, outDir: dist, exclude test.
+api/health.pipeline.test.ts (baru) — reproduksi permanen entrypoint Vercel.
+4. vercel.json final (TIDAK diubah)
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": { "api/**/*.ts": { "maxDuration": 30 } }
+}
+5. Hasil semua test
+npm run typecheck PASS (exit 0)
+npm run lint PASS (exit 0, bersih)
+npm run build PASS (exit 0)
+npm test — 244 pass (35 file; 28 fail = baseline pre-existing Windows SQLite/EPERM, identik dgn baseline)
+git diff --check PASS
+6. Bukti entrypoint Vercel /api/health sudah benar
+Bukan lagi "dist jalan lokal" — test baru api/health.pipeline.test.ts mereplikasi pipeline persis @vercel/node: temp tsconfig yang extends root tsconfig.json + override sama seperti registerNativeCompiler → compile api/health.ts → load hasil emit via import() + unwrapDefaults (ala bundling-handler.js) → invoke GET:
+
+STATUS: 200
+BODY: {"ok":true}
+HEADERS: {"cache-control":"no-store","content-type":"application/json","x-content-type-options":"nosniff","x-frame-options":"DENY","referrer-policy":"no-referrer"}
+Juga memverifikasi file emit bukan ESM (tidak ada import statement) — receptor error "Failed to load the ES module" tereliminasi. Origin fix dist: verifikasi manual yang dulu dipakai sebagai bukti kini digantikan test pipeline ini.
+
+Belum di-commit/push sesuai instruksi. Setelah push + redeploy, GET /api/health diharapkan 200 {"ok":true}.
+
+
+
+
+
+
 
 
 Rantai penyebab:

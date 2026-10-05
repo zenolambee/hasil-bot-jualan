@@ -11,6 +11,57 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+Selesai — FIX FINAL DAILY RECORDING FLOW sudah di-commit & push.
+
+Audit root cause:
+
+lib/recording/service.ts:140 getOpeningCount mewajibkan consecutive harian: throw PreviousRecordingNotFound / RecordingDateGap jika gap 1 hari. Ini penyebab error "Recording sebelumnya belum tersedia".
+recalculateFollowing juga break pada gap, sehingga chain tidak toleran.
+lib/ai/tools.ts meneruskan error gap ke user dengan pesan "lengkapi tanggal terlewat", bukan auto-create.
+lib/sampling/service.ts requireRecording throw RecordingNotFound jika row tanggal belum ada.
+Tidak ada auto-create Day-1 saat batch dibuat.
+Router /daily pakai createDailyRecording (duplicate-sensitive), quick command pakai ensureDailyRecording — dua engine berbeda.
+Fix (single engine di domain layer):
+
+lib/recording/service.ts: tambah ensureDailyRecordingForDate(batchId, date, update) — return row jika ada, else create dengan ageDay = diff(startDate)+1, opening = last closing ?? initialChickCount. getOpeningCount toleran gap. validateDailyRecordingForDate untuk /daily kompatibel (tidak duplicate-error). ensureDailyRecording lama jadi alias.
+lib/batch/service.ts: tambah onCreated hook (best-effort) — createBatch otomatis buat Day-1.
+lib/sampling/service.ts: tambah injeksi ensureDailyRecording — requireRecording auto-ensure.
+lib/ai/tools.ts: semua quick command + sampling pakai ensureDailyRecordingForDate, hapus pesan "lengkapi tanggal".
+lib/telegram/router.ts: startSamplingSession + WEIGHT_VALUES ensure dulu; /daily flow pakai validateDailyRecordingForDate + ensureDailyRecordingForDate saat confirm.
+app/api/telegram/webhook/route.ts + scripts/diagnose-local-webhook.ts: wiring onCreated Day-1 dan sampling ensure.
+Schema Sheets tidak diubah. batch_create tidak dirusak. Data BAROKAHFARM tidak disentuh.
+Tests:
+
+Baru lib/recording/auto-daily-final.test.ts 14/14 PASS (Day-1 auto, ageDay 2/4, gap tanpa error, opening dari closing terakhir, /mati /afkir /terjual /pakan /air auto, no duplicate, sampling ensure, /daily kompatibel, ageDay dari startDate, isolasi batch).
+Update mock lama ke engine baru: ai-chat.test.ts, daily-feed.test.ts, day-sampling-flow.test.ts, auto-daily.test.ts, service.test.ts (gap sekarang toleran, bukan reject).
+Full suite (excl. baseline): 34 files, 255 tests PASS.
+Baseline Windows EPERM/SQLite (lease.test.ts, sqlite-store.test.ts, router-durable.test.ts cleanup) tetap gagal seperti sebelumnya — bukan regression.
+typecheck PASS, lint PASS, build PASS.
+Deploy:
+
+Commit 831360e → push main → 92e5614..831360e sukses. Vercel auto-deploy dari main akan jalan dengan build yang sudah lolos lokal.
+
+
+
+
+
+
+
+
+
+
+
+
 Laporan Auto Daily by Batch Age
 File yang diubah (4 file)
 lib/recording/service.ts — method baru ensureDailyRecording(batchId, date, update): ada → update; belum ada → create dengan default nol. Validasi/gap/ageDay/opening tetap milik engine lama (createDailyRecording).

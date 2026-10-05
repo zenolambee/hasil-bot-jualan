@@ -4,7 +4,26 @@
 
 
 
+File yang diubah (2 file)
+lib/telegram/router.ts — 1 baris di BATCH_CREATE_NOTES: value === "-" → trimmed === "" || trimmed === "-" ? undefined : value
+lib/telegram/batch-create-notes.test.ts — (baru) 4 regression test
+Root cause (temuan jujur dari probe reproduksi)
+Mapping "-" → kosong sudah benar untuk input persis "-" (terbukti test existing + probe).
+"Data tidak valid." yang muncul tepat setelah mengirim - berasal dari validateCreateBatch yang menolak field sebelumnya pada step yang sama — tereproduksi persis: tanggal 05-10-2026 (DD-MM-YYYY) + - → "Data tidak valid.", karena step tanggal (router.ts:227) menyimpan mentah tanpa validasi format dan baru gagal di step catatan. Kemungkinan besar user mengetik tanggal DD-MM-YYYY.
+Fix ini mengeraskan handling catatan (trim eksplisit + whitespace-only → kosong, pola omit sama seperti BatchService), tanpa menyentuh validasi field lain sesuai instruksi. Catatan: error tanggal-tidak-valid tetap muncul sebagai "Data tidak valid." (aturan existing, dipertahankan).
+Regression test (4/4 PASS, memory fakes — tanpa tulis production)
+- → valid, batch terbuat tanpa field notes
+Batch perdana → valid, tersimpan trimmed
+whitespace-only → valid, tanpa notes (tidak ada literal - tersimpan)
+tanggal 05-10-2026 + - → tetap ditolak "Data tidak valid.", batch tidak terbuat (aturan existing utuh)
+typecheck/lint/build/npm test
+typecheck ✅ · lint ✅ · build ✅ · npm test: 248 pass / 28 fail = baseline pre-existing Windows EPERM (tidak ada error baru)
 
+Commit & push
+SHA 051b18f — "fix: accept dash and blank batch notes as empty in batch_create flow"
+Push fb7122d..051b18f main -> main ✅ (percobaan pertama terputus network, commit sudah ada, push ulang sukses)
+Repo hasil
+Tidak ada repo/workflow hasil-bot-jualan yang terhubung ke project ini (bot-jualan di workspace adalah project berbeda, PostgreSQL-based, tidak terkait) — item audit-repo dilewati sesuai klausul "jika".
 
 
 

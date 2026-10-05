@@ -8,7 +8,34 @@
 
 
 
+Laporan Test Local Env
+Hasil utama
+LOCAL TEST FAILED
 
+Stage:
+[15] Webhook handler
+
+Error:
+Error
+
+Message:
+Unexpected webhook response: HTTP 503 {"error":"service unavailable"}
+
+Stack:
+Error: Unexpected webhook response: HTTP 503 {"error":"service unavailable"}
+    at main (.../scripts/diagnose-local-webhook.ts...)
+Stage [1]–[14] semua PASS dengan ENV asli (validasi, Telegram env, Sheets config+client, semua repo/service, ledger, recovery worker, AI, Telegram service, router). Yang gagal hanya [15], persis mereplikasi 503 production.
+
+Penyebab ditemukan (probe read-only tambahan, tanpa ubah kode)
+telegram-getMe: PASS → token valid.
+sheets-read: FAIL SheetsError: Google Sheets permission denied (403) → kredensial terautentikasi, tapi service account tidak punya akses ke spreadsheet (belum di-share / salah ID).
+Alur /start: idempotency → conversation → command, semuanya baca/tulis Sheets sebelum membalas Telegram — panggilan Sheets pertama (ensureSheet) langsung 403 → 503. Konsisten dengan produksi.
+
+Perbaikan (tanpa kode, tanpa redeploy)
+Share Google Sheet ke service account (GOOGLE_SERVICE_ACCOUNT_EMAIL dari Vercel env) dengan peran Editor (bot membuat tab TelegramConversation/TelegramIdempotency), atau betulkan GOOGLE_SHEETS_SPREADSHEET_ID bila salah. Setelah itu test /start lagi.
+
+Checks
+typecheck ✅ · lint ✅ · build ✅ · npm test 244 pass / 28 fail (baseline pre-existing Windows EPERM, tidak terkait) · git status hanya ?? scripts/diagnose-local-webhook.ts — .env.local tidak tracked (diabaikan .gitignore) · tidak ada commit/push.
 
 
 

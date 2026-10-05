@@ -6,7 +6,29 @@
 
 
 
+Laporan Initialize Sheets + Test Ulang
+Initialization: sebagian berhasil (7/8 tab)
+Audit initializeSheets: idempoten — tab hilang dibuat, header kosong ditulis, header beda → throw (tidak menimpa/menghapus data). Aman dijalankan.
+Percobaan 1: timeout network sesaat (SheetsError: request timed out) → di-retry.
+Percobaan 2: 7 tab OK (Batches, DailyRecording, WeightSampling, MasterKandang, MasterPakan, MasterConfig, TelegramConversation), berhenti di terakhir:
+Error: Error: Header mismatch in sheet: TelegramIdempotency
+Penyebab: baris data test saya sebelumnya (update_id hasil test /start) tertulis di baris 1 via append ke tab kosong — initialize menolak menimpa baris berisi data yang bukan header. Tidak ada data yang dihapus.
+Tindakan yang diperlukan dari Anda (30 detik, tanpa kode)
+Buka spreadsheet → tab TelegramIdempotency → sisipkan 1 baris kosong di paling atas lalu isi updateId | processedAt (baris data test ikut turun, tidak hilang) → kabari saya untuk re-run initialize:sheets final. Isi test lain (TelegramConversation) sudah lolos verifikasi.
 
+Test 7 command (setelah tab domain tersedia)
+Command	Result	Error
+/status	PASS	-
+/mati 2	PASS	-
+/afkir 1	PASS	-
+/terjual 20	PASS	-
+/pakan 25	PASS	-
+/air 60	PASS	-
+/berat	PASS	-
+Error invalid range hilang total — tidak ada lagi [TelegramRouter] error di semua command (semua HTTP 200). Command menjawab normal (tanpa batch aktif akan dijawab "buat batch dulu", bukan error).
+
+Checks
+typecheck ✅ · lint ✅ · build ✅ · npm test 244 pass / 28 fail (baseline pre-existing Windows EPERM) · logging sementara di-revert, probe dihapus (git status hanya ?? scripts/diagnose-local-webhook.ts) · tidak ada commit/push/deploy, tidak ada source code diubah, tidak ada credential tampil.
 
 
 

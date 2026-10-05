@@ -13,7 +13,22 @@
 
 
 
+Selesai — URGENT FIX batch_create sudah di-commit (87c449e) & push ke main.
 
+Kenapa production sebelumnya tidak menemukan kandang:
+
+Jalur error Kandang tidak ditemukan hanya berasal dari CoopNotFound di BatchService.resolveCoop (lib/batch/service.ts:66-67), artinya findByIdOrCode me-return null padahal baris ada.
+Audit end-to-end (router → service → repo → range → mapping → active → normalize → Vercel):
+Router (router.ts BATCH_CREATE_*): meneruskan teks mentah user sebagai coopId, service me-trim — OK.
+Range/query: MasterKandang!A2:H sesuai header 8 kolom (headers.ts:5) — OK, dan Sheets API menghilangkan sel kosong trailing sehingga baris produksi nyata datang 6 kolom (KANDANG-01|Kandang-01|Kandang 01|-|1000|TRUE), yang dimapping dengan ?? "" — OK.
+Mapping & active kandang: id=r[0], code=r[1], active case-insensitive — OK.
+Celah yang ditemukan: (1) normalisasi hanya trim().toLowerCase() — tidak menghapus karakter invisible (NBSP/ZWSP/BOM) yang umum masuk saat cell di-copy-paste di Sheets, sehingga lookup miss di produksi tapi lolos di mock; (2) bug sekelas di pakan: GoogleSheetsFeedRepository.deserialize memakai r[4] === "true" case-sensitive sehingga TRUE produksi terparse nonaktif + findByCode tanpa trim.
+Vercel: buildCommand npm run build — typecheck/lint/build kini hijau sehingga deploy main terbaru jalan.
+File diubah:
+
+lib/sheets/repositories.ts — tambah normalizeLookupKey (strip U+200B–U+200D/U+FEFF + trim + lowercase) dipakai findByIdOrCode; perbaiki parsing active feed jadi case-insensitive + trim pada findByCode feed. Schema Sheets tidak diubah.
+lib/batch/coop-sheets-row.test.ts (baru) — integration-style: fake client meniru values.get MasterKandang!A2:H produksi (header + 1 baris 6 kolom), lewat GoogleSheetsCoopRepository + BatchService asli. Mencakup: range query benar, find("Kandang-01"), find("KANDANG-01"), find(" kandang-01 "), varian NBSP/ZWSP/BOM/ZWJ, mapping 6 kolom (active TRUE→true, capacity 1000), create memakai coopId kanonis KANDANG-01, dan CoopNotFound untuk KANDANG-99.
+Verifikasi:
 
 
 

@@ -6,6 +6,26 @@
 
 
 
+Selesai — push ced3e54..9b6c10e ke main. Laporan akhir:
+
+1. Urutan kolom final (A→Z, 26 kolom)
+Tanggal, Umur, Populasi Awal, Mati, Afkir, Terjual, Populasi Akhir, Sampling 1, Sampling 2, Sampling 3, ABW Aktual, ABW Standar, Selisih ABW, Pencapaian ABW, Jenis Pakan, Pakan Terbeli, Pakan Terpakai, Konsumsi Pakan/Ayam, Air Minum, Modal/Biaya, Catatan, Batch, Kandang, ID, Created At, Updated At. Desain: tanggal pertama, blok populasi berurutan, metadata di belakang; warna kategori (mati merah, afkir ungu, terjual oranye, populasi hijau, pakan teal, air biru), freeze, filter, format ribuan/tanggal, highlight baris hari ini; tanpa baris footer (akan terbaca sebagai data).
+
+2. File yang diubah
+lib/sheets/headers.ts, serialization.ts (mapping serialize+deserialize baru), repositories.ts (predikat row[21]/row[0]/row[23]).
+lib/sheets/column-migration.ts (baru: deteksi layout + konversi + self-check round-trip) + testnya.
+scripts/migrate-daily-recording-columns.ts (baru, dry-run default, --apply mengeksekusi, idempotent) + package.json + scripts/README.md.
+lib/sheets/daily-recording-format.ts (26 kolom, formula $A2), docs/GOOGLE_SHEETS.md.
+Tests diselaraskan: serialization, production, hostile, scenario, format, batch-isolation. Business logic, router, service, AI, env, Vercel: tidak disentuh.
+3. Kompatibilitas schema internal
+Nama field domain tidak berubah; mapping satu-jelas (posisi baru); data lama terbaca persis sama setelah migrasi — dibuktikan test migrasi dengan nilai BAROKAHFARM persis (10-02→998, 10-05→996, 10-06→994). Urutan deploy aman: push → tunggu Vercel Ready → jalankan migrasi --apply (script menormalkan sheet campuran; sebelum migrasi, validasi ketat gagal tertutup bukan salah baca).
+
+4. Test result
+45 files, 329 tests PASS (termasuk /mati, /air replace, /pakan cumulative 25→75→85, sampling, read/write repo, migrasi, hostile rows); typecheck/lint/build PASS. Tidak ada failure baru (baseline EPERM Windows tidak muncul).
+
+5. Commit hash
+9b6c10e (feat: reorder DailyRecording columns to operational layout with migration) — sudah push
+
 
 Selesai — push 3b7a2a6..ced3e54 ke main. Berikut laporan wajib:
 

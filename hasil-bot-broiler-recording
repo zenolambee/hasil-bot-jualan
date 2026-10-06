@@ -7,7 +7,11 @@
 
 
 
+Audit selesai. Kode tidak diperbaiki, tidak deploy, production tidak tersentuh.
 
+Catatan path: /root/hasil-bot-jualan tidak ada di mesin ini (Windows), jadi dipetakan ke E:\Repo Github\hasil-bot-jualan — repo git lokal baru, commit 8227f57, tanpa remote/push.
+
+ROOT CAUSE: signCallback() menanam full claims + UUID + HMAC ke callback_data (±190 bytes; pagination ±211 bytes), melebihi batas Bot API 1–64 bytes UTF-8 → Telegram menolak sendMessage konfirmasi (400 BUTTON_DATA_INVALID). AFFECTED FILE: lib/telegram/callback.ts (signCallback), via lib/telegram/formatters.ts (confirmationKeyboard), crash di lib/telegram/router.ts (handleBatchClose baris 172, send). AFFECTED FUNCTION: handleBatchClose → TelegramService.sendMessage → TelegramApiClient.call("sendMessage") melempar TelegramApiError. ACTUAL ERROR: TelegramApiError dari respons Telegram ok:false/400 — bukan error Sheets/domain. Terbukti deterministik: token 190B > 64B; reads Sheets pre-confirm semuanya fail-safe (skip-corrupt/coopNameOf try-catch) dan konsisten dengan observasi ±11 Sheets calls. WHY /batch_close FAILS: satu-satunya send di flow membawa keyboard over-limit sehingga seluruh request (teks + tombol) ditolak sekaligus; catch-all router lalu mengirim teks error generik tanpa keyboard. Webhook tetap 200 karena route selalu jawab {"ok":true}. Scope: semua pengiriman konfirmasi bertombol (batch_create/record/sampling/pagination) memakai token yang sama; command read-only/quick tanpa keyboard tidak terpengaruh. PROPOSED FIX: token kompak action + "." + HMAC-16hex(context) (≤64B), verifikasi recompute terhadap context di conversation state; ubah sign/verify berpasangan + pagination; promosikan regression test menjadi permanen. REGRESSION TEST: lib/telegram/callback-length.audit.test.ts (untracked di broiler-recording, fixture-only) — 3/3 FAIL: expected 190/211 to be less than or equal to 64. Vercel CLI: versi 62.4.0 OK, tetapi whoami/logs hang tanpa auth (tidak login ulang sesuai instruksi) — log runtime tak terambil; audit via kode + reproduksi. PRODUCTION TOUCHED: NO DEPLOYED: NO
 
 
 Deploy ke GitHub selesai. Satu hal jujur: status deployment Vercel tidak dapat saya verifikasi dari environment ini (detail di bawah).

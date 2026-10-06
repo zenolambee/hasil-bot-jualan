@@ -7,7 +7,29 @@
 
 
 
+Selesai — push 3b7a2a6..ced3e54 ke main. Berikut laporan wajib:
 
+1. ROOT CAUSE
+Satu baris imperfect di Google Sheets meledakkan seluruh jalur ensureDailyRecordingForDate. Bukti dari repro test (bukan spekulasi):
+
+Repro skenario task-7 dengan data sehat (10-02 + 10-05 → ensure 10-06) PASS — kode benar untuk data sehat.
+Varian hostile 4/4 RED sebelum fix dengan stack persis: satu sel berisi teks di kolom angka (contoh realistis: "25 kg" di feedUsed, atau baris batch yang baru diisi sebagian) → deserialize → list → findPrevious/getOpeningCount/recalculateFollowing throw (Invalid non-negative number: feedUsed / Missing ID: code) → ensureDailyRecordingForDate gagal → pesan production yang dilaporkan, dengan operation: 'ensure_daily_recording'.
+Mengapa ini menjelaskan production: getOpeningCount (bahkan untuk tanggal BARU) dan recalculateFollowing (setiap update) selalu me-list() + parse seluruh history batch; activeContext me-list() seluruh tab Batches. Satu sel edit-tangan merusak semua command. Lebih parah: di updateDailyRecording, write sudah mendarat SEBELUM recalculateFollowing throw — user diberitahu "belum tersimpan" padahal sebagian tersimpan.
+2. FILE YANG DIUBAH
+lib/sheets/repositories.ts — parseSheetRow/parseSheetRows terpusat; findRow throw SheetsError("corrupt-row", "Corrupt row in {sheet} at row {n}: …"); semua 6 list() (Batch/Recording/Sampling/Coop/Feed/Config) skip baris korup + console.warn("[sheets-skip-corrupt-row]", {sheet, row, reason}). Range, schema 26 kolom, serialisasi, write path, dan semua behavior (set/replace/cumulative/recalc/isolasi) tidak berubah untuk data sehat.
+lib/sheets/errors.ts — tambah kind "corrupt-row".
+lib/sheets/recording-ensure-scenario.test.ts + lib/sheets/recording-hostile-rows.test.ts (baru).
+3. FIX
+Bukan workaround penyembunyi error: korupsi tetap terlihat — sebagai warning ber-nomor-baris di log untuk list(), dan sebagai error presisi untuk lookup tepat-sasaran (mencegah duplikat diam-diam). Bot tetap hidup di atas baris sehat.
+
+4. TEST RESULT
+Hostile 4/4 RED → GREEN setelah fix; skenario task-7 (age 5/opening 996/closing 994, water 70, feed 25→75) PASS.
+Full suite: 44 files, 323 tests PASS (baseline EPERM Windows bahkan tidak muncul kali ini); typecheck/lint/build PASS.
+5. COMMIT HASH
+ced3e54 (fix: isolate corrupt sheet rows so recording saves survive hand edits).
+
+6. Siap deploy Vercel
+Ya — push sukses, build/lint/typecheck hijau. Setelah deploy, jika masih ada baris korup di production, log akan menunjukkannya persis ([sheets-skip-corrupt-row] + nomor baris, atau corrupt-row … at row N) sehingga selnya bisa dibetulkan manual di Sheets
 
 
 

@@ -2,6 +2,58 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRODUCTION ERROR:
+Tidak dapat saya ambil langsung — saya tidak memiliki akses ke Vercel Runtime Logs, Bot Telegram, Google Sheets production, maupun environment variables production. Yang bisa saya pastikan dari kode:
+
+Di main saat ini, string "Data belum tersimpan karena terjadi kesalahan pada penyimpanan." hanya dipancarkan dari 3 titik di lib/ai/tools.ts (baris 67, 229, 255) — dan ketiganya sekarang didahului console.error("[recording-mutation]", …) dalam tick yang sama (commit 3b7a2a6, teruji di lib/ai/recording-error-logging.test.ts). Jalur lain (router.ts catch → "Terjadi kesalahan…", query catch → "Data belum bisa dibaca…") memakai pesan berbeda.
+
+Artinya secara logis hanya ada 2 kemungkinan:
+
+A. Production sudah menjalankan 3b7a2a6 → setiap kemunculan pesan itu PASTI disertai satu baris log [recording-mutation] berisi operation/errorName/errorMessage/stack/batchId/date di Vercel Function Logs pada deployment & rentang waktu yang sama.
+B. Log tidak ada → production TIDAK mengeksekusi 3b7a2a6 untuk update tersebut (stale deployment / webhook URL menunjuk deployment lama / build Vercel gagal / salah environment / retensi log kedaluwarsa).
+ROOT CAUSE:
+Belum bisa disimpulkan dari sisi kode — yang menentukan adalah isi errorName/errorMessage dari log (B), atau hasil audit deployment (A). Dari repo, saya sudah mengeliminasi:
+
+Schema drift: serialize = 26 kolom, urutan identik sheetHeaders (dikunci test); repo create/update memakai range valid; client/index.ts tidak berubah.
+Behavior command: set/replace/accumulate/recalc semuanya PASS lewat repo+serialisasi asli di recording-production.test.ts.
+Instrumen diagnosis (logging) sudah ter-deploy di kode dan teruji; tidak ada jalur lain yang bisa memancarkan pesan tersebut tanpa log.
+Urutan pemeriksaan yang harus dilakukan operator (5 menit):
+
+Vercel → Project → Deployments → pastikan deployment teratas = commit 3b7a2a6, target Production, status Ready. (git lokal = remote = 3b7a2a6, sudah push — tinggal status build Vercel yang belum terlihat dari sini.)
+Kirim /mati 2 persis 1x, catat jamnya (WIB).
+Vercel → Logs → scope Runtime/Function api/telegram/webhook, environment Production, rentang ±10 menit → cari [recording-mutation].
+Jika ketemu → salin operation/errorName/errorMessage/stack/batchId/date (redaksi token bila ada) → itulah error asli untuk diagnosis lanjut.
+Jika tidak ketemu → cek getWebhookInfo (URL webhook menunjuk deployment mana?), env Vercel Production vs env yang dipakai initialize:sheets (nama variabel saja, bukan nilai), dan retensi log.
+FIX:
+Tidak ada code fix pada turn ini (sesuai aturan: commit hanya jika ada fix). Yang sudah ada di 3b7a2a6 dan terverifikasi ulang hari ini:
+
+lib/ai/tools.ts — logging server-side di 3 catch mutasi, pesan user tidak berubah, tanpa credential/secret di log maupun Telegram.
+Contract + production-like + logging tests (13 tests baru, semua PASS).
+DEPLOYMENT:
+Commit: 3b7a2a6 (fix: diagnose and repair daily recording storage).
+Status: lokal main == origin/main == 3b7a2a6 (working tree bersih, sudah push). Status build/deploy Vercel tidak dapat saya lihat dari sini — wajib dikonfirmasi operator di dashboard Vercel.
+Verifikasi ulang turn ini: typecheck PASS; 42/42 tests terkait PASS (recording-error-logging, recording-production, serialization, auto-daily, feed-accumulation).
+Kesimpulan jujur: jangan simpulkan "storage sudah fixed" dari unit test — dan saya juga tidak menyimpulkan sebaliknya. Langkah penentu sekarang adalah menarik 1 baris [recording-mutation] dari Vercel Logs sesuai runbook di atas; tempelkan isinya ke saya, dan saya lanjutkan ke root cause + fix minimal.
+
+
+
 Selesai — commit fix: diagnose and repair daily recording storage (3b7a2a6) sudah push ke main (b444187..3b7a2a6).
 
 Root cause (berdasarkan audit kode CURRENT main):

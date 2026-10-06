@@ -3,6 +3,32 @@
 
 
 
+
+
+
+
+
+
+
+Deploy ke GitHub selesai. Satu hal jujur: status deployment Vercel tidak dapat saya verifikasi dari environment ini (detail di bawah).
+
+Commit & push
+
+97ee3c8 — test: cover sequential batch periods and no coop auto-create
+1eb8e7e — feat: add /batch_close command with confirmation
+Push: c0d6ea6..1eb8e7e main -> main ✅
+Remote terkonfirmasi: git ls-remote origin main = 1eb8e7e… ✅
+Working tree clean ✅
+Status Vercel deployment: TIDAK TERVERIFIKASI dari sini ⚠️
+
+Tidak ada VERCEL_TOKEN, tidak ada auth Vercel lokal, dan GitHub API mengembalikan 404 (tanpa akses dashboard/API).
+Push ke main adalah pemicu deployment otomatis (integrasi GitHub→Vercel). Mohon konfirmasi Ready di dashboard Vercel Anda — biasanya 1–3 menit setelah push.
+Saya tidak mencantumkan URL production karena tidak ada URL terverifikasi di repo.
+Tidak ada perubahan data production ✅
+
+Task ini hanya menjalankan perintah git (status/diff/add/commit/push/ls-remote).
+TIDAK menjalankan /batch_close, TIDAK menyentuh Google Sheets (tidak ada read maupun write), tidak membuat Batch, tidak menghapus Kandang-01/BAROKAHFARM, tidak mengubah schema, tidak migrasi, tidak initialize:sheets.
+
 Fitur /batch_close selesai. Belum di-commit — kabari jika ingin saya push.
 
 Keputusan penting (pertanyaan status tak dijawab): status tetap CLOSED, bukan COMPLETED. Domain (types/domain.ts), validasi Sheets, docs/BATCHES.md, BatchService.closeBatch, dan semua test memakai ACTIVE|CLOSED. Menambah COMPLETED akan menulis nilai baru ke Sheets production yang tidak dikenali kode existing. Semua perilaku yang diminta (tutup, bebaskan kandang, histori utuh, tolak recording/idempoten) sudah dipenuhi CLOSED via service existing.

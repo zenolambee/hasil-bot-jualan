@@ -2,7 +2,20 @@
 
 
 
+Selesai — commit fix: diagnose and repair daily recording storage (3b7a2a6) sudah push ke main (b444187..3b7a2a6).
 
+Root cause (berdasarkan audit kode CURRENT main):
+
+Error storage ditelan tanpa jejak — catch {} di ketiga jalur mutasi (updateToday, record_feed, record_sampling di lib/ai/tools.ts) membuang error name/message/stack. Auth/timeout/kuota/validasi/baris korup semua menghasilkan pesan user yang identik sehingga tidak bisa didiagnosis. Ini defect utama yang diperbaiki.
+Write path real tidak pernah diuji — semua service test memakai memory repository yang melewatkan serializeDailyRecording, validasi Sheets, A1 ranges, dan recalculateFollowing-via-list. Drift repo↔schema (mis. 13 vs 26 kolom) hanya akan gagal di production.
+Kontrak terverifikasi utuh — audit membuktikan create (append DailyRecording!A:Z), update (A{n}:Z{n}), dan serialize (26 nilai, urutan identik header) sudah sesuai schema current; tidak ada drift hari ini. Behavior set/replace/accumulate/recalcien dipertahankan.
+File yang diubah:
+
+lib/ai/tools.ts — logMutationError server-side ([recording-mutation] + operation/batchId/date/errorName/errorMessage/stack) di 3 catch mutasi; pesan user tetap sama; tanpa credential/spreadsheet ID/stack ke Telegram.
+lib/sheets/serialization.test.ts — contract test objek lengkap → tepat 26 values index-per-index sesuai header + round-trip.
+lib/sheets/recording-production.test.ts (baru, 8 tests) — real GoogleSheetsRecordingRepository + real serialize + fake client ala API (trailing-empty omission, capture range): append 26 kolom, update-in-place + range valid, skenario BAROKAHFARM (06/10 → age 5, opening 996, closing 994), mortality set (2→3), water replace (70→60), pakan akumulasi (25→75→85), recalc chain + read-back.
+lib/ai/recording-error-logging.test.ts (baru, 4 tests) — log berisi konteks + user message generik + tanpa bocor detail internal + diam saat sukses.
+Hasil: test baru 13/13 PASS; full suite 303+ PASS kecuali 4 baseline EPERM Windows yang sudah dikenal; typecheck/lint/build PASS → Vercel deploy PASS. Tidak ada perubahan schema, tab, header, alur batch, behavior command, atau data existing.
 
 
 

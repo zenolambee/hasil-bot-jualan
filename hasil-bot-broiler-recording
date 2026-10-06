@@ -9,7 +9,36 @@
 
 
 
+Fix selesai. --apply BELUM dijalankan sesuai instruksi — hanya DRY-RUN.
 
+Root cause
+
+Row 1 production = header visual emoji urutan legacy (# | Batch | Tanggal…), bukan legacy (id,batchId…) maupun current (Tanggal,Umur…). detect lama → unknown → fail-closed, benar untuk abort.
+Row 2 = duplikat internal header (id,batchId,date… = LEGACY_HEADERS persis). Walau header diperbaiki pun, Row 2 akan gagal parseLegacy (ageDay = NaN) sehingga migrasi tetap abort.
+Data Row 3-5 valid urutan legacy, selaras semantik dengan header visual (hanya beda label).
+File berubah (4, tidak ada commit)
+
+lib/sheets/column-migration.ts: layout baru legacy-visual-stray, isLegacyVisualDailyRecordingHeader (normalisasi buang-emoji/lowercase), isDuplicateInternalHeaderRow, convertVisualTableWithStrayHeader (wajib stray exact di Row 2, parse + round-trip per row, penomoran error sheet Row index+3, return droppedLeadingRows: 1). ConvertedDailyRecordingTable tambah droppedLeadingRows.
+scripts/migrate-daily-recording-columns.ts: dispatch 3 layout, validasi converted.rows == dataRows - dropped, preview semua row (≤10), apply tulis header + data lalu values.clear A{new+2}:Z{old+1} untuk sisa ghost row. Semua validasi sebelum tulis.
+lib/sheets/index.ts: export fungsi baru.
+lib/sheets/column-migration.test.ts: regression test visual + stray + 3 rows.
+Domain/field internal, webhook, business logic, initialize:sheets tidak disentuh.
+Regression test: column-migration 7/7 PASS (termasuk test baru: 1 header final, 3 rows, tanpa duplikat, nilai identik deserialize == parseLegacy, abort Row 3 untuk korup dan row 2 untuk stray hilang). lib/sheets 49/49 PASS. typecheck PASS, lint PASS, build PASS. Full suite: 354 pass, 28 fail di lib/operations + router-durable (SQLite/EPERM Windows) — terbukti pre-existing via stash di tree bersih, tidak terkait migrasi.
+
+DRY-RUN production (exit 0, tanpa tulis):
+
+Legacy visual layout detected with 1 duplicate schema header in row 2: 3 data rows verified for conversion.
+New header: Tanggal | Umur | Populasi Awal | … | Batch | Kandang | ID | Created At | Updated At (26, sesuai target)
+Converted row 1: 2026-10-02 | 1 | 1000 | 2 | 0 | 0 | 998 | … | 87389a2c… | KANDANG-01 | 9e338de8… | …
+Converted row 2: 2026-10-05 | 4 | 998 | 2 | 0 | 0 | 996 | …
+Converted row 3: 2026-10-06 | 5 | 996 | 2 | 0 | 0 | 994 | …
+Stray header rows to remove: 1; trailing range to clear: DailyRecording!A5:Z5.
+Dry run only
+Jumlah data: sebelum = 4 row bawah header (1 stray + 3 data), sesudah (rencana) = 3 data. Total incl header 5 → 4. Validasi jumlah lolos.
+
+3 recording utuh: YA — 2026-10-02/1/1000/2/998, 2026-10-05/4/998/2/996, 2026-10-06/5/996/2/994, round-trip identik, hanya posisi kolom berubah ke urutan 26 target.
+
+Siap --apply? YA dari sisi kode + dry-run. Menunggu persetujuan Anda; belum ada tulis/hapus ke production.
 
 MIGRASI PRODUCTION DIBATALKAN SECARA AMAN — --apply TIDAK dijalankan. Alasan: DRY-RUN FAIL, script abort sesuai desain fail-closed.
 

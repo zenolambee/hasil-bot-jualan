@@ -5,6 +5,30 @@
 
 
 
+
+
+
+
+
+Selesai. Perubahan hanya 1 file test (belum di-commit/push — kabari jika ingin saya push). Tidak ada tulis ke production di task ini.
+
+File berubah
+
+lib/telegram/batch-isolation.test.ts (+2 test, import CoopNotFound, DuplicateBatchCode). Kode produksi/test lain, schema, 26 kolom, webhook, flow Telegram: tidak diubah.
+Temuan audit (penting)
+
+Tidak ada auto-seed KANDANG-01 di kode: BatchService mewajibkan coop ada (CoopNotFound jika tidak), app/api/.../route.ts hanya lookup (findByIdOrCode, nameOf), initializeSheets hanya header, tidak ada coops.create di source non-test.
+Isolasi batch sudah benar: DailyRecordingService (opening dari batch.initialChickCount/closing batch yang sama, ageDay dari batch.startDate, semua query filter batchId), ReportService/AI tools/router selalu resolve batch lalu query per batch.id. /mati,afkir,terjual,pakan,air,berat,recording,recording_list,laporan semuanya lewat batch aktif.
+KANDANG-01 di production BUKAN seed buangan — Batches (1 row: BAROKAHFARM/coopId KANDANG-01/ACTIVE), MasterKandang (1 row KANDANG-01), DailyRecording (3 rows, semua coopId KANDANG-01) semuanya mereferensikannya. Menghapusnya akan orphan histori + merusak resolveCoop/tampilan nama kandang. Maka saya TIDAK menghapus dari production (aturan 2 & 9 menang atas aturan 1). coopId tetap di schema/rows untuk backward compat, hanya bukan identitas utama.
+Test (semua PASS)
+
+Baru 16: siklus berurutan 1 kandang — Batch 1 Juni (1000) → close → Batch 2 Juli (800): Day-1 Batch 2 ageDay 1/opening 800 (bukan closing Batch 1), Day-2 chaining internal, query silang null, histori Batch 1 utuh, duplikat code ditolak.
+Baru 17: batch_create ke coop tak dikenal → CoopNotFound, counter coops.create tetap 0 (tidak ada auto-buat).
+Terkait: 18 file / 156 test PASS (lib/batch, lib/recording, lib/sheets, batch-isolation, laporan, reporting). typecheck PASS, lint PASS, build PASS. (Full-suite failures lib/operations SQLite EPERM Windows sudah terbukti pre-existing sebelumnya.)
+Production (read-only, tidak ada hapus/tulis)
+
+DailyRecording tetap 4 rows incl header / 3 data valid (2026-10-02/05/06), Batches 1 row, MasterKandang 1 row — tidak ada data terhapus.
+
 MIGRASI PRODUCTION BERHASIL 100%. Tidak ada error, tidak ada operasi destruktif kedua.
 
 Command: npm run migrate:daily-recording -- --apply (env production .env.local, spreadsheet sama dengan aplikasi/Vercel).

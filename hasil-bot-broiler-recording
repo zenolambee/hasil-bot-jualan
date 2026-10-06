@@ -6,6 +6,48 @@
 
 
 
+
+
+
+
+
+MIGRASI PRODUCTION DIBATALKAN SECARA AMAN — --apply TIDAK dijalankan. Alasan: DRY-RUN FAIL, script abort sesuai desain fail-closed.
+
+1. Audit scripts/migrate-daily-recording-columns.ts (commit 9b6c10e): BENAR
+
+Scope hanya DailyRecording (DailyRecording!A1:Z1, A2:Z), tidak hapus spreadsheet/tab/row, tidak buat row contoh, tidak ubah webhook/schema, tidak panggil initialize:sheets.
+Idempotent: detectDailyRecordingLayout → current no-op, legacy konversi, unknown abort.
+Verifikasi per-row: parseLegacy → serialize (urutan baru) → deserialize → stableStringify harus identik, plus cek jumlah row. Abort di row pertama yang gagal.
+Urutan baru 26 kolom di serializeDailyRecording persis semantik task (date, ageDay, openingChickCount… batchId, coopId, id, createdAt, updatedAt). Literal header baru = Indonesia (Tanggal, Umur, Populasi Awal… Batch, Kandang, ID, Created At, Updated At), bukan internal names — task poin 4 adalah urutan semantik, bukan string literal.
+2. DRY-RUN result: FAIL (exit 1)
+
+Error: Unrecognized DailyRecording header; migration aborted without changes.
+--apply tidak dijalankan sesuai PENTING.
+
+3. APPLY result: TIDAK DIJALANKAN.
+
+4. Header sebelum (= sesudah, tidak diubah), A1:Z1, 26 kolom: # | Batch | Tanggal | Umur | Kandang | Populasi Awal | Mati | Terjual | Populasi Akhir | Jenis Pakan | Pakan Terbeli | Pakan Terpakai | Air Minum | Rata-rata Berat | Catatan | Dibuat | Diperbarui | Afkir | Sampling 1 | Sampling 2 | Sampling 3 | ABW Standar | ABW Selisih | ABW Pencapaian | Pakan/Ekor | Biaya (dengan emoji, lihat read-back). Bukan legacy (id,batchId,date…) maupun current (Tanggal,Umur…) — maka unknown.
+
+5. Jumlah row sebelum/sesudah: SAMA (tidak ada tulis)
+
+Total incl header: 5. Header: 1, data: 4.
+Row2 = stray header internal (id,batchId,date,ageDay…cost) — bukan data, akan gagal parseLegacy (Invalid integer: ageDay).
+Row3-5 = 3 data aktual (len 22, trailing kosong terpotong API).
+6. Verifikasi 3 row (legacy order id-first, nilai sesuai task):
+
+2026-10-02 age 1 opening 1000 mortality 2 sold 0 closing 998, batch 87389a2c-…, kandang KANDANG-01
+2026-10-05 age 4 opening 998 mortality 2 sold 0 closing 996
+2026-10-06 age 5 opening 996 mortality 2 sold 0 closing 994 Hanya POSISI kolom yang belum migrasi; nilai utuh. batchId UUID (test memakai BAROKAHFARM sebagai placeholder).
+7. Data tetap utuh: YA. Hanya read (values.get A1:Z1, A1:Z50). Tidak ada values.update, tidak hapus tab/data, tidak ubah nilai, tidak deploy baru.
+
+8. Verifikasi kode: column-migration 6 pass + serialization 13 pass (19 total), typecheck PASS, lint PASS, build PASS. Working tree clean, tidak ada commit (sesuai instruksi). Temp scripts/readback-tmp.mjs sudah dihapus.
+
+Next (perlu persetujuan eksplisit, JANGAN auto-run): rapikan manual header emoji → header current + hapus stray Row2, atau perpanjang script dukung layout emoji.
+
+
+
+
+
 Selesai — push ced3e54..9b6c10e ke main. Laporan akhir:
 
 1. Urutan kolom final (A→Z, 26 kolom)

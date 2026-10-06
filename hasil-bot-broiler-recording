@@ -11,7 +11,24 @@
 
 
 
+/mati 3
 
+Barokah Farm Recording:
+Data belum tersimpan karena terjadi kesalahan pada penyimpanan.
+Error /mati 3 masih sama — dan ini justru memperkuat satu hipotesis utama. Ada kemungkinan besar Telegram tidak memanggil deployment terbaru sama sekali, sehingga semua fix tidak berpengaruh.
+
+Cek penentu (30 detik, tanpa CLI, tanpa login): Buka di browser (ganti <TOKEN> dengan token bot Anda):
+
+https://api.telegram.org/bot<TOKEN>/getWebhookInfo
+Lihat field url. Ada 2 kemungkinan:
+
+A. URL berisi hash deployment seperti ...-pa5zvu483-....vercel.app/api/telegram/webhook → ITU BUG-NYA. URL deployment bersifat frozen: Telegram selamanya memanggil kode lama, push baru tidak akan pernah berpengaruh, dan log [recording-mutation] tidak akan pernah muncul. Fix: set TELEGRAM_WEBHOOK_URL=https://broiler-recording-vert.vercel.app/api/telegram/webhook lalu npm run telegram:set-webhook.
+B. URL sudah domain production (broiler-recording-vert.vercel.app/...) → deployment oke, lanjut ke log. Di JSON yang sama lihat juga last_error_date, last_error_message, dan pending_update_count — kalau ada error koneksi, tertulis di situ.
+Tempel ke saya: nilai url, last_error_message, pending_update_count (tokennyaklinik — hapus token dari URL sebelum ditempel).
+
+Catatan kecil: awalan "Barokah Farm Recording:" tidak berasal dari kode kita (pesan error kita murni satu kalimat itu) — kemungkinan judul chat/topik di Telegram Anda, jadi abaikan.
+
+Jangan kirim /mati berulang-ulang dulu — setiap retry gagal hanya menambah noise. Satu cek getWebhookInfo di atas lebih menentukan daripada 10x retry.
 
 
 

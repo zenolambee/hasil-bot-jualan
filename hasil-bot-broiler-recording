@@ -6,7 +6,22 @@
 
 
 
+Validasi selesai. Murni TEST/CODE — nol tulis ke production (semua repo in-memory, tidak ada panggilan Sheets API di task ini).
 
+File berubah (belum commit, 1 file)
+
+lib/telegram/batch-isolation.test.ts: +test 18 (test 16 & 17 dari task sebelumnya sudah ada di working tree yang sama). Schema 26 kolom, webhook, flow recording, data production: tidak diubah.
+Test baru 18 — cerminan production persis (KANDANG-01 id, Kandang-01 code, Batch 1 BAROKAHFARM start 2026-10-02 populasi 1000 → close 2026-10-31 → Batch 2 BAROKAHFARM-02 kandang sama start 2026-11-01 populasi 800):
+
+Day 1 Batch 2 ageDay 1 / opening 800 / closing 800, Day 2 age 2 / opening 800 (bukan closing Batch 1) — PASS
+batchId Batch 2 di semua row-nya, query silang (2026-10-03 di Batch 2) null, histori Batch 1 utuh hanya id Batch 1, 1 kandang menampung 2 batch, duplikat code case-insensitive (barokahfarm) ditolak — PASS
+No auto-create kandang dilock test 17 (CoopNotFound + counter coops.create = 0) — PASS
+Hasil validasi
+
+batch-isolation: 17/17 PASS (termasuk 16, 17, 18)
+Terkait (lib/batch, lib/recording, lib/sheets, batch-isolation, laporan, reporting): 18 file / 157 test PASS
+typecheck PASS, lint PASS, build PASS
+Production utuh: tidak ada operasi tulis — Kandang-01, Batch BAROKAHFARM, 3 DailyRecording tidak tersentuh.
 
 
 

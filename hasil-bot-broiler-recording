@@ -10,7 +10,19 @@
 
 
 
+1. File yang berubah:
 
+lib/telegram/formatters.ts — batchDetailText (🐔 BATCH AKTIF: Batch/Kandang/Tanggal Masuk/Populasi/Umur/Status), batchSummaryText + batchListText identitas per batch, recordingDetailText (label Indonesia, tanpa coopId), recordingText/recordingListText ringkas pakai kode batch + tanggal DD/MM, recordingSummaryText, noActiveBatchText. Isi /start tidak disentuh.
+lib/telegram/router.ts — /batch, /batch_active, /status, /recording, /recording_list pakai display baru + pesan tidak-ada-batch-aktif; filter tetap per batchId batch aktif; coops?: CoopDirectory opsional (fallback ke ID bila lookup gagal). Pagination meneruskan kode batch.
+app/api/telegram/webhook/route.ts — sediakan coops.nameOf dari repository existing.
+lib/sheets/daily-recording-format.ts + scripts/format-daily-recording.ts — header warna kategori (populasi hijau, mati merah, terjual oranye, pakan teal, air biru, afkir ungu), wash badan kolom, highlight baris hari ini (=$C2:TODAY(), anti-duplikat saat re-run). Tanpa baris footer TOTAL — footer data akan terbaca repository sebagai DailyRecording dan merusak reads.
+lib/telegram/router.test.ts — sesuaikan ekspektasi display baru.
+lib/telegram/batch-isolation.test.ts (baru, 14 tests) — semua 15 item.
+2. Ringkasan: audit membuktikan semua query (/recording, /recording_list, quick command, sampling, AI tools, reporting, recovery) sudah memfilter per batchId — tidak ada query unfiltered; yang diperbaiki adalah tampilan identitas + bukti isolasi. coopId tetap di schema/data, hanya disembunyikan dari tampilan. Aturan bentrok batch aktif dipertahankan. Tidak ada file banned yang diubah (tanpa BatchService/DailyRecordingService/AI tools/repository/schema/Vercel/env).
+
+3. Test: full suite (excl. baseline EPERM Windows): 40 files, 303 tests PASS (termasuk 14 isolasi + 10 format); typecheck/lint/build PASS → Vercel deploy PASS.
+
+4-5. Schema tidak berubah (sheetHeaders dikunci test); isolasi per batchId terbukti K01-01/K01-02/K02-01 tidak tercampur.
 
 
 Selesai — URGENT FIX batch_create sudah di-commit (87c449e) & push ke main.

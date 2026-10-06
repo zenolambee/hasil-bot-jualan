@@ -3,7 +3,24 @@
 
 
 
+Fitur /batch_close selesai. Belum di-commit — kabari jika ingin saya push.
 
+Keputusan penting (pertanyaan status tak dijawab): status tetap CLOSED, bukan COMPLETED. Domain (types/domain.ts), validasi Sheets, docs/BATCHES.md, BatchService.closeBatch, dan semua test memakai ACTIVE|CLOSED. Menambah COMPLETED akan menulis nilai baru ke Sheets production yang tidak dikenali kode existing. Semua perilaku yang diminta (tutup, bebaskan kandang, histori utuh, tolak recording/idempoten) sudah dipenuhi CLOSED via service existing.
+
+File berubah
+
+lib/telegram/router.ts: command /batch_close → info batch + recording terakhir → konfirmasi (BATCH_CLOSE_CONFIRM, tombol Ya, Tutup Batch/Batal + teks YA/BATAL) → closeBatch(batchId, businessDate) via executeConfirmedMutation (batch:close:<id>, tipe BATCH_CLOSE); Batal = tanpa tulis.
+lib/telegram/conversation.ts: state BATCH_CLOSE_CONFIRM; formatters.ts: batchCloseConfirmationText (+ pertanyaan yakin), batchClosedText ("Batch berhasil ditutup." + Nama/Kode/Kandang/Status), noActiveBatchToCloseText, label kustom di confirmationKeyboard, menu /batch_close.
+lib/telegram/commands.ts: entri native menu; recovery-handlers.ts: handler BATCH_CLOSE (verify: non-ACTIVE = effect present); docs/TELEGRAM.md: 1 bullet.
+Test: baru lib/telegram/batch-close.test.ts (8 test = A–J); commands.test.ts + menu.test.ts didaftarkan batch_close.
+Hasil test
+
+batch-close: 8/8 PASS (A pesan tanpa-active, B tutup+ringkasan, C histori, D kandang, E+F+G batch-2 terisolasi Day 1, H tolak recording, I Batal, J ganda aman + BatchAlreadyClosed).
+Terkait: 33 file / 241 test PASS; satu-satunya gagal router-durable 4 test = EPERM Windows pre-existing (terbukti di tree bersih sebelumnya).
+typecheck PASS, lint PASS, build PASS.
+Production: tidak tersentuh — nol panggilan Sheets; semua test in-memory. Tidak ada Batch production dibuat/diubah.
+
+Cara pakai pasca-deploy: /batch_close → periksa info → Ya, Tutup Batch (tombol/YA) atau Batal; tanpa batch aktif → "Tidak ada batch aktif yang dapat ditutup."
 
 
 Validasi selesai. Murni TEST/CODE — nol tulis ke production (semua repo in-memory, tidak ada panggilan Sheets API di task ini).

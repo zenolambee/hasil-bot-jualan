@@ -3,6 +3,34 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+Fitur selesai, tanpa deploy, production utuh.
+
+1. File berubah (commit lokal 152eb5a, 10 file +431/−10): baru lib/reporting/batch-performance.ts (+test); ubah reporting/{service,formatters,index}.ts, router.ts (auto-laporan pasca-close + /laporan tanpa arg), route.ts (wire getAbwStandard), batch-close/laporan.test.ts, docs/TELEGRAM.md. ABW/fitur lain/schema/ABW-snapshot tak diubah.
+
+2. Test baru + hasil: 11 service (A–I + fallback + format eksak BAROKAHFARM) + 2 router (J auto-laporan, K gagal-laporan) + 2 laporan (fallback CLOSED-terbaru, L tanpa row baru) — semua PASS.
+
+3. npm test: 399 passed / 28 failed — 28 = baseline EPERM Windows (lease 13, sqlite-store 11, router-durable 4, terbukti di 3 file itu), nol failure baru; scope terkait 251+35/35 PASS. 4. typecheck: PASS. 5. lint: PASS. 6. build: PASS.
+
+7. /batch_close kini otomatis menghasilkan laporan performa — setelah CLOSED: kirim "Batch berhasil ditutup." + laporan; gagal laporan → batch tetap CLOSED + pemberitahuan; Batal tak berubah.
+
+8. Commit SHA: 152eb5a (lokal, di atas cf6ea59). 9. Push status: TIDAK push (sesuai larangan deploy — push ke main memicu auto-deploy Vercel)
+
+
+
+
 Audit selesai. Temuan terbesar: origin sudah berisi implementasi paralel 20 commit — saya adopsi itu (reset ke 5845d71, commit lokal a969eeb tersimpan di reflog tapi tidak dipakai), lalu lengkapi gap-nya. Commit lokal baru cf6ea59, tanpa push (tidak diminta; push = deploy).
 
 Hasil audit A–H: desain origin benar — snapshot 65/batch di tab terpisah BatchAbwStandards + sourceVersion, idempotent, lazy-backfill aman untuk legacy, resolver di recording/sampling, DailyRecording 26 kolom utuh, /batch_close utuh. Satu bug nyata ditemukan: scripts/backfill-batch-abw.ts import path salah → typecheck origin FAIL — sudah diperbaiki.

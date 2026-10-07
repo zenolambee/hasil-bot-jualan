@@ -8,6 +8,31 @@
 
 
 
+
+
+
+
+
+
+Redesign TVPlay selesai dan sudah di-commit.
+
+Yang dikerjakan (murni UI, tanpa ubah logic):
+
+Sidebar navigasi kiri (Beranda, Film, Serial, Daftar Saya, Cari, Pengaturan)
+Hero fullscreen sinematik + tombol Putar / Daftar Saya
+Rel horizontal: Lanjut Menonton (dengan progress), Film Populer, Serial Populer
+Search overlay modern, detail film (backdrop besar, poster kiri info kanan), panel kualitas & server ramah TV
+Focus D-pad jelas (outline biru + scale ringan, tanpa layout bergeser)
+Semua behavior lama dipertahankan: API, token, cache, fallback, player logic, localStorage
+Verifikasi: 39/39 acceptance test PASS, alur manual (Settings → connect → Search → Detail → Play → Quality → Server → Back) PASS, 0 JS error.
+
+Commit 9f9485a dengan message persis "tvplay: redesign cinematic Netflix-style TV UI" (file tvplay/index.html + catatan redesign di tvplay/README.md).
+
+Silakan dicek di repo. Kalau ada detail tampilan yang mau disesuaikan, tinggal bilang.
+
+
+
+
 Ringkasan
 Audit: seluruh source Android tetap di app/ (tidak diubah), tvplay/index.html tetap behavioral reference, API_SPEC.md tetap contract. Hanya tvplay/index.html + tvplay/README.md yang diubah — tanpa fitur di luar permintaan.
 

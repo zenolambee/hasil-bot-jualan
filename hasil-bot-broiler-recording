@@ -1,6 +1,26 @@
 
 
 
+
+
+Audit selesai. Temuan terbesar: origin sudah berisi implementasi paralel 20 commit — saya adopsi itu (reset ke 5845d71, commit lokal a969eeb tersimpan di reflog tapi tidak dipakai), lalu lengkapi gap-nya. Commit lokal baru cf6ea59, tanpa push (tidak diminta; push = deploy).
+
+Hasil audit A–H: desain origin benar — snapshot 65/batch di tab terpisah BatchAbwStandards + sourceVersion, idempotent, lazy-backfill aman untuk legacy, resolver di recording/sampling, DailyRecording 26 kolom utuh, /batch_close utuh. Satu bug nyata ditemukan: scripts/backfill-batch-abw.ts import path salah → typecheck origin FAIL — sudah diperbaiki.
+
+Yang saya tambahkan (6 file, +107/−10): nilai snapshot 35/50, isolasi 2 batch, usability batch CLOSED, resolver recording/sampling, round-trip + header tab baru, wiring diagnose = prod. Tanpa arsitektur baru.
+
+Laporan:
+
+ABW standard: PASS (1–65 lengkap, 56/1418/2390/3867/5095, di luar range undefined)
+Batch snapshot: PASS (65/batch, versi tersimpan, idempotent, lazy aman)
+Recording: PASS (standar milik batch; aktual/selisih/pencapaian benar)
+Sampling: PASS (slot 1/2/3, in-place, standar batch di write+preview)
+Legacy batch: PASS (backfill idempotent, histori tak tersentuh, tanpa duplikat)
+Google Sheets: PASS (header/serialisasi benar, corrupt terisolasi, init aman, nol tulis prod)
+Test: 384 passed / 28 failed — 28 = baseline EPERM Windows (lease 13, sqlite 11, router-durable 4), nol failure baru; scope terkait 251/251 PASS
+Typecheck: PASS (sebelumnya FAIL di origin) — Lint: PASS — Build: PASS
+
+
 Commit SHA: a969eeb — feat: batch-scoped ABW standard snapshots (+623/−27, 27 file, tree clean lokal).
 
 Desain: domain BatchAbwStandard + tab Sheets terpisah BatchAbwStandards (Batches/DailyRecording utuh); config/abw-standard.ts tetap template default (+ABW_STANDARD_DAYS, SOURCE_VERSION); BatchService.createBatch: validate→create→snapshot 65→onCreated; gagal snapshot = throw tanpa data palsu, dilengkapi backfill idempotent. Resolver batch di recording (create/update/recalculate), sampling (preview/set), AI stored-first; fallback global hanya untuk batch pra-backfill. Script backfill:batch-abw dry-run default, duplicate-safe, tak sentuh tab lain. DRY-RUN production read-only: BAROKAHFARM 0/65 → akan append 65; --apply TIDAK dijalankan.

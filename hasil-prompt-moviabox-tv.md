@@ -8,7 +8,24 @@
 
 
 
+Ringkasan
+Audit: seluruh source Android tetap di app/ (tidak diubah), tvplay/index.html tetap behavioral reference, API_SPEC.md tetap contract. Hanya tvplay/index.html + tvplay/README.md yang diubah — tanpa fitur di luar permintaan.
 
+Yang ditambahkan/diubah di tvplay/index.html
+Settings: Base URL, API Key, Tes Koneksi (status ● API Connected / ● API Offline), Simpan & Sambung, Hapus Konfigurasi; Settings jadi halaman pertama bila belum terkonfigurasi.
+Persist localStorage tvplay_base / tvplay_key; auto-isi field & auto-connect saat refresh (tidak perlu isi ulang).
+REST API TEST: Test /health (tanpa key; tampil status/version/response time), Test Search, Test Detail — stream tidak diuji di sini.
+/health tanpa X-API-Key; search/detail/stream pakai X-API-Key.
+Play-only resolve (katalog/search/detail/episode tidak memanggil /api/stream).
+Fallback 502 maks 2, 429 backoff 20 s retry sekali, 400/401/404 tanpa retry.
+Tipe stream dari bentuk URL (bukan label kualitas): master/media → HLS, direct → progressive.
+Token expiry refresh −30 s; 401 media → resolve ulang; posisi dipertahankan saat ganti server/kualitas.
+Cache search 10 m / detail 5 m (sessionStorage); stream tidak di-cache.
+Pesan error ramah & tersanitasi (tanpa key/token/fileUrl/upstream/stack).
+Verifikasi (bukan klaim)
+Mock API + Chrome headless (Playwright) menjalankan 39/39 PASS, mencakup semua 20 acceptance criteria (persist config, health tanpa key, key di search/detail, play-only, mapping HLS/progressive, token expiry, 401 re-resolve, 502 fallback maks 2, 429 backoff 20 s, switch posisi, cache, tanpa secret di UI, 0 JS error). Hasil ditulis di commit message + tvplay/README.md.
+
+Commit: ddfe681 — tvplay: REST API web tester + persist config (localStorage)
 
 
 Audit hasil

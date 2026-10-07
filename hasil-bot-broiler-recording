@@ -8,6 +8,20 @@
 
 
 
+
+
+Audit selesai tanpa menyentuh kode, Sheets, atau production. Tidak ada commit (tidak diperlukan).
+
+A. Root cause yang terbukti (dari kode): Keempat gejala = baca Sheets BERHASIL tapi nol batch ACTIVE terbaca, bukan error kredensial/API (itu akan menghasilkan "Terjadi kesalahan…", bukan "Belum ada data"). Rantai configuredRouter → sheetsConfigFromEnvironment → createGoogleSheetsClient → GoogleSheetsBatchRepository.list({status:"ACTIVE"}) membaca Batches!A2:K dan semuanya benar di kode; test batch/sheets 106/106 PASS, typecheck/lint PASS, tree clean. Tidak ada primitif delete di codebase dan initializeSheets tidak pernah menghapus — kode tidak bisa menghilangkan data.
+
+B. Belum bisa diverifikasi dari sini: (1) apakah GOOGLE_SHEETS_SPREADSHEET_ID di Vercel sama dengan spreadsheet berisi BAROKAHFARM (lokal memakai ****CuMo, kecocokan dengan Vercel tak terlihat); (2) isi tab Batches aktual — spreadsheet berbeda/kosong, tab terhapus (lalu ter-recreate kosong oleh ensureSheet), atau sel status teredit (Aktif/spasi → row di-skip diam-diam oleh validator) semuanya menghasilkan gejala identik; (3) commit yang sedang live di Vercel (kemungkinan kecil sebagai penyebab — path baca batch stabil di semua versi).
+
+C. File terkait: route.ts:40-41, lib/sheets/client/index.ts, lib/sheets/repositories.ts (Batches!A2:K + filter ACTIVE), lib/batch/service.ts, config/environment.ts, .env.example.
+
+D. Code vs env: Kode benar — jangan commit apa pun. Perbaiki GOOGLE_SHEETS_SPREADSHEET_ID (dan pastikan service account punya akses) di Vercel Environment Variables; alternatif yang lebih murah: bandingkan akhir ID Vercel dengan ****CuMo.
+
+E. Langkah teraman: (1) di dashboard Vercel, samakan spreadsheet ID + redeploy; (2) buka tab Batches spreadsheet itu — jika BAROKAHFARM/ACTIVE ada dan bot tetap kosong, cek ejaan status; (3) JANGAN buat batch baru/duplikat sebelum itu — duplikat BAROKAHFARM akan ditolak DuplicateBatchCode atau memecah histori.
+
 Audit selesai tanpa menyentuh kode, Sheets, atau production. Tidak ada commit (tidak diperlukan).
 
 A. Root cause yang terbukti (dari kode): Keempat gejala = baca Sheets BERHASIL tapi nol batch ACTIVE terbaca, bukan error kredensial/API (itu akan menghasilkan "Terjadi kesalahan…", bukan "Belum ada data"). Rantai configuredRouter → sheetsConfigFromEnvironment → createGoogleSheetsClient → GoogleSheetsBatchRepository.list({status:"ACTIVE"}) membaca Batches!A2:K dan semuanya benar di kode; test batch/sheets 106/106 PASS, typecheck/lint PASS, tree clean. Tidak ada primitif delete di codebase dan initializeSheets tidak pernah menghapus — kode tidak bisa menghilangkan data.

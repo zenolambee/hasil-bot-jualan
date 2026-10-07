@@ -14,7 +14,17 @@
 
 
 
+Push berhasil, semua terverifikasi.
 
+Remote main sebelum: 5845d71
+Commit ABW terakhir: cf6ea59 — test: complete batch ABW coverage and fix backfill script import
+Commit Performance terakhir: 152eb5a — feat: batch performance report with auto-report on close
+Commit remote main setelah push: 152eb5a (5845d71..152eb5a, terkonfirmasi via ls-remote)
+npm test: 399 passed / 28 failed — 28 = baseline EPERM Windows yang sama (13+11+4), nol failure baru; scope ABW/performa 197/197 PASS
+typecheck: PASS — lint: PASS — build: PASS — git diff --check: bersih
+Working tree: clean
+Push: berhasil (normal, tanpa force; sempat gagal 2x karena jaringan lalu pulih)
+Perubahan production: tidak ada — hanya git push; tanpa migrasi/initialize//batch_close/Sheets/env; tanpa deploy manual (auto-deploy Vercel mengikuti push, silakan cek dashboard)
 
 Fitur selesai, tanpa deploy, production utuh.
 

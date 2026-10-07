@@ -4,6 +4,14 @@
 
 
 
+Fix selesai, test PASS, sudah push. Klaim root cause Anda tepat — saya verifikasiก่อน ubah: callback.message adalah pesan milik bot sehingga message.from.id = ID bot; satu-satunya pola di codebase; fixture lama tidak punya message.from sehingga lolos dari test.
+
+Fix (1 baris, router.ts:33): callback?.from.id ?? message.from?.id — update biasa tidak berubah; token/HMAC/store/Sheets/domain/start/help utuh.
+
+Test: K (Ya via tombol + sender bot → CLOSED), L (Batal → ACTIVE, data utuh), M (user asing ditolak), 2 test identitas generik di router.test.ts (pagination + penolakan). Toggle ke kode lama: tepat K & L FAIL → reproduksi terbukti. Terkait: 251 passed (4 gagal = EPERM router-durable lama). typecheck/lint/build PASS.
+
+Push: b1372aa..50a160c main -> main ✅, remote = 50a160c ✅. Laporan di-commit di hasil-bot-jualan (25dc459, lokal). Production tidak tersentuh, tidak deploy manual
+
 
 Fix selesai diimplementasi dan tervalidasi penuh. Satu hal jujur di akhir: push gagal karena jaringan.
 

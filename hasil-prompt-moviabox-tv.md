@@ -6,6 +6,44 @@
 
 
 
+
+
+
+
+
+
+PASS
+
+18 tests
+0 failures
+CacheManagerTest 5 · StreamResolverExpiryTest 4 · StreamResolverTest 6 · UrlToolsTest 3
+
+APK
+Path: app/build/outputs/apk/debug/app-debug.apk
+Size: 10.295.170 byte (9,82 MB) — timestamp 2026-10-08 06:34:25 (fresh, setelah HEAD)
+SHA-256: 63BD2721563789688CB1BB531C98AD1287DF938EC4540FAAB2DBBE77B821D544
+ERROR
+none (satu warning non-fatal: Kotlin compile daemon gagal connect → Gradle fallback in-process, kompilasi tetap sukses).
+
+Verifikasi konfigurasi & toolchain
+Root: org.jetbrains.kotlin.android 1.9.24 apply false; App: id("org.jetbrains.kotlin.android") tanpa versi → ikut root. Tidak ada workaround temporary.
+JDK 17.0.20.1 · Android SDK platform-34 · build-tools 34.0.0 · platform-tools (adb) — tersedia.
+Cek source penting (semua ada)
+MainActivity · DetailActivity · PlayerActivity · PlayerViewModel · StreamResolver · PlayerManager · Settings · FocusKit · layout TV native. Tidak ada WebView.
+
+Behavior terverifikasi di source HEAD:
+
+/api/stream hanya dari PlayerViewModel (play-only) ✔
+master/media → HlsMediaSource; direct → ProgressiveMediaSource ✔
+token expiry refresh (lead 30 s), 401 → recover ≤1 ✔
+fallback p2p→turbovip→cast→hydrax maks 2; 429 backoff 20 s ✔
+quality/server switch pertahankan posisi (currentPosition()) ✔
+D-pad (6 adapters/activities) + BACK nav ✔
+API URL + key configurable (ApiConfig: SharedPrefs → BuildConfig) ✔
+Commit
+37e699d docs: record final verified build (HEAD 3a16c51, APK SHA-256) — hanya README (tidak hapus info lama); sudah di-push ke origin/main. Working tree bersih. Tidak menambah fitur, tidak ubah UI/API/player logic.
+
+
 Laporan — Verify Toolchain + Build (source main terbaru 6638593)
 Langkah 1 — Toolchain
 Item	Hasil

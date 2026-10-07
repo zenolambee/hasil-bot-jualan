@@ -11,7 +11,31 @@
 
 
 
+Audit hasil
+Seluruh source Android ada di app/ (25 file .kt main + 4 kelas uji). tvplay/index.html tetap behavioral reference, API_SPEC.md tetap API contract (keduanya utuh).
+Tidak ada TODO/FIXME untuk fitur wajib. Tidak ada laporan/prompt yang disimpan sebagai "implementasi".
+Root cause yang diperbaiki (bukan workaround)
+themes.xml: Theme.MaterialComponents.Dark.NoActionBar tidak ada di Material 1.12.0 → diganti parent resmi Theme.MaterialComponents.NoActionBar (base-nya dark).
+CacheManager.kt: remove()/clear() mengekspos tipe private Entry → ubah ekspresi synchronized menjadi block body.
+SettingsViewModel/Activity: parameter apiKey mati pada testConnection (/health tanpa auth) → dihapus dari signature & call site.
+PlayerActivity.kt: tambah suppress OVERRIDE_DEPRECATION (KT-47902).
+Hasil verifikasi (clean build)
+Item	Hasil
+./gradlew assembleDebug	PASS
+./gradlew testDebugUnitTest	PASS (18 test, 0 gagal)
+Compile error / warning	tidak ada
+APK	app/build/outputs/apk/debug/app-debug.apk — 10.236.215 byte (± 9,76 MB)
+Test: StreamResolverTest 6, StreamResolverExpiryTest 4, CacheManagerTest 5, UrlToolsTest 3 — fallback/token-expiry/cache/resolver terverifikasi.
 
+BuildConfig: MOVIE_API_URL/MOVIE_API_KEY tergenerate (injection via moviebox.properties/env/-P + Settings). HTTP client OkHttp, Media3 HLS/Progressive, manifest — semua lolos kompilasi.
+
+Commit
+230b95b — kode terverifikasi (build+test PASS)
+7e819bf — README mencatat hasil build, nama/ukuran APK, hasil test, SHA
+Working tree bersih; local.properties (path SDK temp) ter-gitignore.
+Acceptance: BUILD = PASS · UNIT TEST = PASS · APK EXISTS = PASS · NO COMPILE ERROR · NO TODO (fitur wajib).
+
+Berhenti di sini — tidak menambah fitur. Catatan: build lokal tak dapat diverifikasi tanpa toolchain; di mesin ber-SDK cukup .\gradlew.bat assembleDebug testDebugUnitTest.
 
 
 

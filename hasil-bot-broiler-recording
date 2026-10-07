@@ -5,7 +5,20 @@
 
 
 
+Fix selesai diimplementasi dan tervalidasi penuh. Satu hal jujur di akhir: push gagal karena jaringan.
 
+Root cause (dikonfirmasi): signCallback() menanam full claims + UUID + HMAC → ±190B (pagination ±211B) vs limit Bot API 64B → BUTTON_DATA_INVALID di setiap pengiriman konfirmasi. Bukan Sheets.
+
+Perubahan (commit lokal b1372aa, 6 file): token kompak v1.<kode>.<userId>[.<page>].<mac22> (MAC 128-bit; chat/context di-binding dari state server-side; freshness via TTL 30 mnt); router verifikasi terhadap binding; regression permanen byte-length + round-trip + mismatch + format-lama di callback.test.ts; docs disesuaikan. /start//help tidak berubah.
+
+Test: callback 8/8, batch-close 8/8, telegram 115 passed; full suite 370 passed/28 failed — 28 failure identik baseline, semua EPERM Windows (lease 13, sqlite-store 11, router-durable 4), nol failure baru. typecheck/lint/build PASS.
+
+Status push — PERLU AKSI: git push origin main gagal 3x dari mesin ini (timeout + proses dibunuh; ls-remote juga gagal — rute github down saat ini, padahal push tadi pagi berhasil). Commit lengkap dan tree clean lokal. Jalankan ulang git push origin main dari koneksi sehat (idempotent). Belum deploy Vercel — benar, sesuai instruksi.
+
+Laporan sudah di-commit di hasil-bot-jualan (69747bc, lokal, tanpa remote).
+
+production touched: NO
+deployed: NO
 
 Audit selesai. Kode tidak diperbaiki, tidak deploy, production tidak tersentuh.
 

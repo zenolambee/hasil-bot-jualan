@@ -5,7 +5,17 @@
 
 
 
+1. Guard batch belum dimulai (cae9149)
 
+BatchNotStarted di lib/recording/errors.ts (punya batchStartDate), dilempar assertDateWithinBatch (lib/recording/service.ts) & assertSamplingDate (lib/sampling/service.ts) saat date < startDate — sebelum write apa pun, berlaku semua jalur (/mati, /afkir, /terjual, /pakan, /air, /daily, /record, sampling, AI).
+Pesan Telegram khusus: ⚠️ Batch belum dimulai. Tanggal masuk: … Tanggal hari ini: … (zona waktu aplikasi), kini tampil juga pada jalur konfirmasi callback.
+2. Pesan error aman — error Sheets asli tetap generic "Data belum tersimpan…"; BatchNotStarted masuk PERMANENT_MUTATION_ERRORS (FAILED_PERMANENT, tidak retry); tidak ada stack/ID spreadsheet bocor.
+
+3. Coop deletion aman — CoopInUse + BatchService.deleteCoop menolak jika masih ada batch ACTIVE yang mereferensikan Kandang-01 (nama batch ikut dilaporkan); delete row nyata via SheetsClient.deleteRows (deleteDimension, header aman, hanya row terkait). Kandang-01 otomatis terlindungi selama BF-2026-10/12 ACTIVE — hard delete ditolak dengan alasan jelas, bukan merusak referensi.
+
+4. Validasi — 431 test lulus; 28 fail persis baseline EPERM Windows (lease/sqlite-store/router-durable, bukan regresi); typecheck, lint, build PASS; diff bersih tanpa .env/secret/perubahan skema.
+
+Data batch (BF-2026-10/12, startDate 2026-12-01, populasi 1300, histori recording) tidak tersentuh. Kandang-01 bisa dihapus nanti setelah batch ditutup lewat operasi delete yang sama.
 
 Redesign TVPlay selesai dan sudah di-commit.
 

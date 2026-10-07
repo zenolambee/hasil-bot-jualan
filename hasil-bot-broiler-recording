@@ -6,7 +6,23 @@
 
 
 
+Audit read-only selesai. Tidak ada kode diubah, tidak ada commit/push, tidak ada tulis ke Sheets (hanya 2× GET dengan scope readonly; script audit sementara sudah dihapus, tree clean di d8c2c2a).
 
+ROOT CAUSE: Batch BAROKAHFARM di spreadsheet berstatus CLOSED (endDate 2026-10-07 = hari ini) — bukan ACTIVE, bukan hilang, bukan salah spreadsheet. Nol batch ACTIVE → keempat gejala muncul persis dari kode yang benar.
+
+EVIDENCE:
+
+Batches!A2:K terbaca: 1 row — BAROKAHFARM | 2026-10-02 | KANDANG-01 | 1000 | status "CLOSED" (exact, tanpa whitespace), ACTIVE_COUNT_EXACT_MATCH=0.
+Filter kode status === "ACTIVE" + header Batches 11 kolom + range A2:K terverifikasi benar dan tak berubah.
+Semua pesan cocok dengan array kosong: batchListText([]) → "Belum ada data."; tanpa ACTIVE → BatchNotFound ("Batch tidak ditemukan.") dan "Belum ada batch aktif…".
+Health {"ok":true} — deployment hidup; env lokal lengkap (****CuMo format valid). Kode tak punya primitif delete; endDate hari-ini konsisten dengan alur /batch_close (bukan migrasi — migrasi tak menyentuh Batches).
+Test batch/sheets 106/106 PASS; typecheck/lint PASS.
+CODE STATUS: PASS GOOGLE SHEETS STATUS: PASS (terbaca; tab lengkap; data utuh, hanya status CLOSED) VERCEL ENV STATUS: TIDAK BISA DIVERIFIKASI (tanpa akses dashboard; kecocokan spreadsheet disimpulkan dari konsistensi data, bukan bukti langsung) DATA BATCH STATUS:
+
+BAROKAHFARM ditemukan: ya
+status ACTIVE: tidak — CLOSED (endDate 2026-10-07)
+jumlah batch terbaca: 1 (0 ACTIVE)
+NEXT ACTION: Ini bukan bug — jangan ubah kode/env. Jika penutupan tidak disengaja, keputusannya di tangan Anda (saya dilarang mengubah Sheets). Untuk produksi berjalan lagi, buat batch periode baru via /batch_create di Telegram pada KANDANG-01 (kini bebas karena tak ada ACTIVE) — histori BAROKAHFARM tetap terbaca via /laporan/recording_list.
 
 
 

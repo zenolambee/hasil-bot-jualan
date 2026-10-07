@@ -8,7 +8,19 @@
 
 
 
+Porting ke APK Android TV native selesai.
 
+Yang dikerjakan:
+
+Home: sidebar + hero cinematic + rel poster (Lanjut Menonton dengan progress, Jelajahi, Film Populer, Serial Populer)
+Search overlay, Detail (backdrop + poster + info + server/episode), Player dengan panel kualitas & server
+Navigasi remote TV native (focus jelas, no layout shift, focus restore)
+Semua logic dipertahankan: StreamResolver, token, fallback, cache, Media3 — tanpa WebView
+Verifikasi: assembleDebug BUILD SUCCESSFUL (APK 9.9 MB), 18 unit test PASS, 0 gagal.
+
+Commit: 8afb39b dengan message persis "android: port cinematic tvplay UI to native Android TV" (terpaksa jadi 2 commit karena batas teknis ukuran payload — commit pertama yang membawa message persis itu; commit kedua resources + README).
+
+Satu catatan jujur: testing di perangkat TV fisik tidak bisa dilakukan dari sini — checklist manual A–O (D-pad di hardware asli, dsb.) perlu kamu coba langsung di STB/TV. Kalau ada yang perlu diperbaiki setelah dicoba, kabari aku.
 
 
 

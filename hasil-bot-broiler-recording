@@ -11,7 +11,14 @@
 
 
 
+Selesai. Push sempat gagal 1x karena jaringan intermiten, retry berhasil.
 
+File berubah (4): lib/telegram/parser.ts (pattern ^\/?sampling…), lib/telegram/router.ts (cek sesi saat IDLE sebelum dispatch command), parser.test.ts + day-sampling-flow.test.ts (regression). Tanpa command baru, tanpa ubah logic/schema/flow/deploy.
+Format didukung: 7 target + sesi 2/3 + gram/g + desimal koma/titik → semua {session:1, count:10, totalWeight:1000}; validasi sesi 1–3, count>0 integer, berat>0 tetap. Invalid (/sampling1 polos, sesi 0/4, count 0) tetap null. Alur tetap: preview → konfirmasi → durable mutation → update slot sama; resend replace.
+Test: full 402 passed / 28 failed — 28 = baseline EPERM Windows yang sama, nol failure baru. typecheck/lint/build/diff-check: PASS.
+Commit SHA: d8c2c2a — fix: accept flexible sampling input formats
+Push: 152eb5a..d8c2c2a main -> main ✅, remote = d8c2c2a ✅, tree clean ✅
+Production/Sheets: tidak tersentuh (hanya vitest/tsc/eslint/git; tanpa migrasi/initialize/deploy/env).
 
 
 Push berhasil, semua terverifikasi.

@@ -1,7 +1,16 @@
 
 
 
+Commit SHA: a969eeb — feat: batch-scoped ABW standard snapshots (+623/−27, 27 file, tree clean lokal).
 
+Desain: domain BatchAbwStandard + tab Sheets terpisah BatchAbwStandards (Batches/DailyRecording utuh); config/abw-standard.ts tetap template default (+ABW_STANDARD_DAYS, SOURCE_VERSION); BatchService.createBatch: validate→create→snapshot 65→onCreated; gagal snapshot = throw tanpa data palsu, dilengkapi backfill idempotent. Resolver batch di recording (create/update/recalculate), sampling (preview/set), AI stored-first; fallback global hanya untuk batch pra-backfill. Script backfill:batch-abw dry-run default, duplicate-safe, tak sentuh tab lain. DRY-RUN production read-only: BAROKAHFARM 0/65 → akan append 65; --apply TIDAK dijalankan.
+
+Test: semua wajib PASS (65 otomatis; 56/1418/5095/undefined-66; isolasi 2 batch; template baru tak ubah batch lama; CLOSED utuh; backfill tanpa duplikat; example 1350/−68/95.2; sampling & /batch_close utuh; Sheets round-trip). Full: 396 passed/28 failed — 28 identik baseline EPERM Windows, nol baru. typecheck/lint/build PASS.
+
+Push: PENDING — git push origin main gagal berulang (rute github down saat ini; insiden serupa tadi pulih sendiri). Ulangi dari koneksi sehat. Laporan di-commit di hasil-bot-jualan (b4744f1, lokal).
+
+production touched: NO
+deployed: NO
 
 
 Fix selesai, test PASS, sudah push. Klaim root cause Anda tepat — saya verifikasiก่อน ubah: callback.message adalah pesan milik bot sehingga message.from.id = ID bot; satu-satunya pola di codebase; fixture lama tidak punya message.from sehingga lolos dari test.

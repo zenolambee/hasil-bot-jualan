@@ -3,7 +3,25 @@
 
 
 
+Selesai — commit dd022bb feat: remove batch notes prompt from /batch_create flow.
 
+File yang berubah
+File	Perubahan
+lib/telegram/router.ts	Hapus step BATCH_CREATE_NOTES + prompt "Masukkan catatan batch…"; setelah COUNT → langsung validateCreateBatch + konfirmasi inline; createBatch tanpa notes
+lib/telegram/conversation.ts	Hapus state BATCH_CREATE_NOTES dan field notes? dari BATCH_CREATE_CONFIRM
+lib/telegram/batch-create-notes.test.ts	Di-rewrite: flow baru tak pernah minta catatan, YA langsung create tanpa notes, validasi & cancel tetap jalan
+lib/telegram/router.test.ts	Flow test 7-input → 6-input (tanpa "-")
+lib/telegram/router-durable.test.ts	BATCH_FLOW tanpa "-"
+lib/telegram/batch-create-reliability.test.ts	BATCH_FLOW tanpa "-"
+Ringkasan perubahan
+Flow baru: kode → nama → tanggal masuk → kandang → jumlah ayam awal → konfirmasi → create (lib/telegram/router.ts:305). Validasi domain (kode duplikat, kandang tidak aktif, dll.) kini berjalan saat COUNT sebelum konfirmasi. Field notes tetap ada di domain/BatchService untuk data lama — batch baru dibuat tanpa notes. Fitur lain (recording, sampling, batch_close, laporan, schema Sheets) tidak tersentuh.
+
+Hasil validasi
+typecheck: PASS (tsc --noEmit + scripts config)
+lint: PASS (eslint .)
+test: 430 passed; 30 failed = 28 baseline EPERM Windows (lease/sqlite-store/router-durable cleanup) + 2 timeout flake lib/operations yang lolos saat isolated run (15/15 PASS) dan bukan bagian dari perubahan
+build: PASS (tsc -p tsconfig.build.json)
+Belum di-push — bilang saja kalau mau di-push ke main
 
 1. Guard batch belum dimulai (cae9149)
 

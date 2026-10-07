@@ -3,7 +3,34 @@
 
 
 
+1. Root Cause Final
+BatchAbwStandardService.snapshotBatch() menulis 65 baris ABW satu request Google Sheets per baris di dalam onCreated() (app/api/telegram/webhook/route.ts:53), sebelum router sempat mengirim "Batch berhasil dibuat". Total ~70+ network call (reads + 65 append + ensureSheet + day-1 recording) melebihi batas waktu webhook Vercel → response sukses tak terkirim. Batch sebenarnya berhasil dibuat (mutation + ledger COMPLETED), jadi retry Confirm mendapat "Operasi sudah diproses atau kedaluwarsa." dan /batch_create ulang mendapat "Batch dengan kode tersebut sudah ada." — sesuai desiatteringgal operasi, bukan bug idempotency.
 
+2. File yang Diubah
+File	Perubahan
+lib/batch-abw-standard/ports.ts	+ createMany(values) di interface repository
+lib/sheets/repositories.ts	+ createMany(): 1× values.append() untuk semua baris, ensureReady() sekali, serialisasi identik create(), skip jika kosong
+lib/batch-abw-standard/service.ts	snapshotBatch() kini kumpulkan baris yang kurang lalu satu kali createMany(); gagal createMany = gagal snapshot (propagasi); idempotensi ageDay, 1..65, lazy backfill tetap
+lib/telegram/router.ts	answerCallbackQuery segera ("Sedang menyimpan batch..."/"Sedang menutup batch..."/"Sedang menyimpan data...") sebelum mutation; hasil akhir (sukses/error domain) selalu dikirim sebagai pesan chat
+lib/batch-abw-standard/service.test.ts	+ test A, B, C, H, J (bulk sekali, tanpa duplikasi, partial-only, gagal propagasi, backfill)
+lib/sheets/batch-abw-create-many.test.ts	(baru) bukti 1 append/65 baris, serialisasi sama create(), ensureSheet, emptyskip
+lib/telegram/batch-create-reliability.test.ts	(baru) test D, E, F, G: sukses message, status ACTIVE, exactly-once, replay tanpa duplikat, error domain
+3. Hasil Test
+npm test: 416 passed / 28 failed / 444 total — 28 kegagalan = persis baseline EPERM Windows yang sudah ada (lease.test.ts 13, sqlite-store.test.ts 11, router-durable.test.ts 4), nol regresi baru.
+
+4. Typecheck / Lint / Build
+npm run typecheck (tsc + tsconfig.scripts) — PASS
+npm run lint (eslint) — PASS, 0 warning
+npm run build — PASS
+5. Commit SHA
+f55408d — fix: make batch creation confirmation reliable — sudah di-push ke main (d8c2c2a..f55408d), working tree bersih.
+
+6. Kenapa Confirm Sekarang Tidak Lagi Timeout
+65 append → 1 append: snapshot ABW jadi satu bulk write, total network call per-create turun dari ~70 ke ~6.
+Callback di-answer segera setelah verifikasi token (sebelum mutation), sehingga tombol Telegram tidak lagi menampilkan loading menggantung; feedback "Sedang menyimpan batch..." tampil instan.
+Pesan final selalu terkirim sebagai chat message: sukses → "Batch berhasil dibuat…", gagal → pesan error domain (bonus perbaikan: sebelumnya error hanya masuk ke callback reply yang bisa kedaluwarsa).
+Durable ledger tetap source of truth: jika response tetap timeout, retry Confirm memberi tahu "sudah diproses" tanpa membuat duplikat — batch yang sudah terlanjur dibuat tidak disentuh.
+Dilarang & tidak dilakukan: tidak ada tulis/ubah production Sheets, tidak ada migration, BAROKAHFARM tetap CLOSED, batch yang sudah ada tidak dihapus.
 
 
 Audit read-only selesai. Tidak ada kode diubah, tidak ada commit/push, tidak ada tulis ke Sheets (hanya 2× GET dengan scope readonly; script audit sementara sudah dihapus, tree clean di d8c2c2a).

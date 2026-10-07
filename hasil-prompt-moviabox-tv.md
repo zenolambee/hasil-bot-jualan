@@ -6,6 +6,63 @@
 
 
 
+Laporan — Verify Toolchain + Build (source main terbaru 6638593)
+Langkah 1 — Toolchain
+Item	Hasil
+java -version	Tersedia — OpenJDK Temurin 17.0.20.1 (portable, di temp)
+javac -version	Tersedia — javac 17.0.20.1
+./gradlew --version	OK — Gradle 8.7, JVM 17.0.20.1, Kotlin 1.9.22
+ANDROID_HOME / ANDROID_SDK_ROOT	Tidak di env sistem; dipakai SDK di temp
+Lokasi SDK	C:\Users\ACER\AppData\Local\Temp\opencode\toolchain\android-sdk
+platforms/android-34	Ada
+build-tools/34.0.0	Ada
+platform-tools (adb)	Ada
+cmdline-tools/latest	Ada
+Catatan: JDK/SDK tidak ada di PATH sistem (sama seperti fase sebelumnya). Saya memakai toolchain portable yang sudah disiapkan di temp, bukan laporan lama.
+
+Langkah 2/5 — Build source terbaru
+.\gradlew.bat clean assembleDebug pada commit 6638593 yang di-checkout GAGAL — bukan error kode, tapi konflik versi plugin Kotlin yang ter-commit:
+
+build.gradle.kts (root) : org.jetbrains.kotlin.android version "1.9.24" apply false
+app/build.gradle.kts    : org.jetbrains.kotlin.android version "1.9.22"
+> Error resolving plugin ... already on the classpath with a different version (1.9.24)
+clean tidak sempat jalan karena gagal di fase konfigurasi, jadi app/build/outputs/apk/debug/app-debug.apk di repo stale (timestamp 07/10 16:51, lebih tua dari commit terbaru 07/10 23:59) — tidak boleh dianggap hasil build terbaru.
+
+Non-invasif: override via init script tidak cukup (konflik classpath tetap). Maka saya:
+
+tidak mengubah source repo (tetap clean),
+membuat copy throwaway C:\Users\ACER\AppData\Local\Temp\opencode\mb-build dari main,
+mengubah satu baris build-file saja: 1.9.22 → 1.9.24 (agar konsisten dengan root).
+Hasil pada copy tersebut (kode sumber identik dengan main):
+
+Perintah	Hasil
+gradlew clean assembleDebug	BUILD SUCCESSFUL (25m, 40 task)
+gradlew testDebugUnitTest	BUILD SUCCESSFUL
+Compile error	tidak ada
+APK: ...\mb-build\app\build\outputs\apk\debug\app-debug.apk — 10.295.162 byte (9,82 MB)
+
+Unit test: CacheManagerTest 5 · StreamResolverExpiryTest 4 · StreamResolverTest 6 · UrlToolsTest 3 → 18 tests, 0 failures, 0 errors.
+
+Langkah 6 — UI/Remote check (source main)
+Semua elemen ada di source terbaru:
+
+Elemen	Bukti
+Sidebar	activity_main.xml @+id/sidebar + SidebarAdapter.kt + bg_sidebar_item_tv.xml
+Hero	item_hero.xml + hero_gradient.xml (RailAdapter hero)
+Horizontal rails	@id/rail/item_rail.xml + RailAdapter.kt
+Grid	@+id/gridMode, @+id/gridList + PosterAdapter.kt
+Detail backdrop	activity_detail.xml @+id/backdrop + detail_gradient.xml
+Player controls	activity_player.xml: PlayerView, overlay, exit, seekProgress, playPause, menu
+D-pad focus	FocusKit.kt + onKeyDown/KEYCODE_DPAD di Main/Detail/Player/Search/Settings
+BACK navigation	PlayerActivity.onBackPressed/KEYCODE_BACK; tombol back di Detail/Search; finish() di Main/Settings
+API/player logic tidak diubah.
+
+Kesimpulan jujur
+BUILD = FAIL pada source main apa adanya — penyebabnya defect build-file yang ter-commit (versi plugin Kotlin root 1.9.24 vs app 1.9.22). Ini bukan error kode.
+BUILD = PASS setelah memperbaiki satu baris build-file (di copy terpisah). Test PASS, APK terbentuk.
+Repo moviebox-tv tidak saya ubah (git status bersih); APK repo lama stale, jangan dipakai.
+Rekomendasi perbaikan permanen (perlu persetujuan, hanya build-file): hapus version di app/build.gradle.kts baris 5 agar memakai versi dari root build.gradle.kts — id("org.jetbrains.kotlin.android") (tanpa versi). Mau saya terapkan + rebuild + commit?
+
 
 
 Porting ke APK Android TV native selesai.

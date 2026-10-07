@@ -3,6 +3,25 @@
 
 
 
+Jumlah row per sheet (setelah penghapusan)
+Sheet	Data row	Status
+Batches	0	✓ kosong (3 row dihapus: termasuk BF-2026-10/12)
+DailyRecording	0	✓ kosong (4 row dihapus)
+WeightSampling	0	✓ sudah kosong sebelumnya
+BatchAbwStandards	0	✓ kosong (89 row dihapus)
+MasterKandang	1	✓ dipertahankan (Kandang-01)
+MasterPakan	0	tidak tersentuh
+MasterConfig	0	tidak tersentuh
+Detail operasi
+Header semua sheet dipertahankan (clear range mulai A2:Z)
+TelegramConversation, TelegramIdempotency, struktur sheet, env — tidak tersentuh
+Tidak ada source code / commit / logic aplikasi yang diubah (script temp dihapus setelah selesai, working tree tetap bersih di dd022bb)
+Clear pertama via values.update([]) tidak efektif; diperbaiki memakai spreadsheets.values.clear API dan diverifikasi re-read = 0 row semua
+Batch BF-2026-10/12 kini sudah tidak ada — bot siap untuk pembuatan batch asli
+
+
+
+
 Selesai — commit dd022bb feat: remove batch notes prompt from /batch_create flow.
 
 File yang berubah

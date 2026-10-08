@@ -1,6 +1,33 @@
 
 
 
+
+
+
+Ya, selesai. Laporan akhir:
+
+1. Commit SHA: 2913bc9 — fix: finalize chicken photo archive requirements, sudah ter-push ke origin/main (656009d..2913bc9).
+
+2. File yang berubah (10 file, +248/−18):
+
+config/environment.ts — TELEGRAM_PHOTO_ARCHIVE_CHANNEL_ID wajib production
+config/environment.test.ts, config/preflight.test.ts, app/api/telegram/webhook/route.production.test.ts — test env & gate
+lib/telegram/formatters.ts — caption arsip + photoListDetailText + photoChannelLinkRef
+lib/telegram/router.ts — caption kirim (user/index/max), catch error sendPhoto, teks limit, hapus const unused
+lib/telegram/photo.test.ts — test baru limit persis, caption, link, Telegram API error
+.env.example, README.md, docs/DEPLOYMENT.md — dokumentasi
+3. Typecheck: PASS 4. Lint: PASS 5. Build: PASS 6. Test: 479 passed / 28 failed — 28 failure adalah baseline Windows EPERM pre-existing (lease.test.ts 13, sqlite-store.test.ts 11, router-durable.test.ts 4; terverifikasi sama via git stash pada commit sebelumnya — bukan regression baru).
+
+7. Ringkasan 5 GAP:
+
+Channel ID wajib production — ada di PRODUCTION_REQUIRED_ENV_VARS + validateProductionEnvironment; webhook gagal-closed 503 bila kosong; tidak ada hardcode; tidak ada secret di log.
+Caption arsip — persis 🐔 FOTO AYAM / - Batch / - Kandang / - User (opsional username/nama) / - Tanggal / - Umur: N hari / - Foto: i/3; foto tetap via file_id, tidak pernah diunduh.
+/foto_list reference — private channel → t.me/c/…, public @username → t.me/username/…; bila tidak aman → channel: X | message: Y (tidak ada link palsu); kirim ulang via telegramFileId tetap jalan.
+Batas foto — enforced di ChickenPhotoService (hitung ulang sebelum simpan + idempotent by channelMessageId, race-safe); teks persis ⚠️ Batas foto hari ini sudah tercapai (3 foto).
+README — seksi "Fitur Foto Ayam" lengkap: diagram arsitektur, cara pakai, batas 3/hari, setup channel (bot admin + izin post), env var, format caption, reference link, Sheets hanya metadata, Vercel tanpa filesystem.
+Repo zenolambee/hasil-bot-jualan tidak disentuh.
+
+
 Audit selesai. Implementasi existing sudah memenuhi sebagian besar requirement. Gap yang perlu diperbaiki:
 
 Req 1: TELEGRAM_PHOTO_ARCHIVE_CHANNEL_ID belum wajib di production validation

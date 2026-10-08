@@ -1,3 +1,50 @@
+# 2026-10-08 — Sidebar fix verification (moviebox-tv)
+
+SIDEBAR FIX:
+PASS
+
+COMMIT:
+48372b4bedc08512417a1681c6cdd5eab0abb850
+
+BUILD:
+PASS
+
+TEST:
+PASS
+18 tests
+0 failures
+
+APK:
+9.9M (10301059 bytes)
+2026-10-08 02:42 UTC
+90008095ab0c41dd7a6b7aa857ed2562b396850bf796907e4930435025f741ab
+
+WORKFLOW:
+PASS
+
+RUN ID:
+37719083335
+
+ARTIFACT:
+moviebox-tv-debug-apk
+
+ARTIFACT STATUS:
+available
+
+D-PAD:
+PASS (verifikasi logic dari source; hardware STB fisik belum diuji)
+
+BACK:
+PASS
+
+REGRESSION:
+PASS
+
+ERROR:
+none
+
+---
+
 
 
 

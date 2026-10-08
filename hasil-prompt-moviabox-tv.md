@@ -1,6 +1,32 @@
 
 
 
+Selesai. Ringkasan:
+
+SEARCH (SearchActivity, SearchViewModel)
+
+Alur remote: INPUT → DOWN → CARI → DOWN → hasil; OK/Enter di input menjalankan search.
+Hasil tidak lagi memaksa fokus kembali ke input; BACK tetap kembali.
+Query diteruskan apa adanya setelah trim; query kosong tidak memanggil API.
+State Idle baru: empty-state tidak muncul sebelum request selesai; loading saat jalan.
+Grid kolom responsif (gridSpanCount) — HP ~2–4, TV 5; tombol/field tetap touch-friendly.
+EPISODE (DetailActivity, EpisodeAdapter, EpisodeSelection)
+
+RecyclerView horizontal, item focusable+clickable, indikator fokus jelas (applyTvFocus).
+Pilihan berubah hanya via OK/klik, bukan karena fokus; selectedEpisode.slug dipertahankan.
+Auto-scroll ke episode terpilih, UP kembali ke tombol aksi, DOWN dari Putar ke episode.
+PUTAR tanpa pilih → episode pertama (fallback), tanpa mengubah state terpilih; film tidak berubah.
+DiffUtil + payload selection (tanpa notifyDataSetChanged), refresh mempertahankan slug.
+VERIFIKASI
+
+testDebugUnitTest: PASS 32 test, 0 gagal (baru: SearchViewModelTest 5, EpisodeSelectionTest 9).
+assembleDebug: BUILD SUCCESSFUL.
+APK: app-debug.apk 10.409.315 byte, SHA-256 B5B24C88339D8FDB6DBD4CD45BDF70DB051D38E87FF1D41989525602F668064F.
+Tidak menyentuh /api/stream, token, PlayerManager, StreamResolver, kualitas/server.
+Commit daf6546 (belum di-push; README sudah diperbarui).
+Beri tahu kalau mau saya push
+
+
 
 Selesai bro! 🎉 CI hijau, 36/36 test lolos. Laporan sedang ditulis ke repo.
 

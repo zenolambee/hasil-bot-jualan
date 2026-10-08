@@ -1,6 +1,23 @@
 
 
 
+Audit selesai. Implementasi existing sudah memenuhi sebagian besar requirement. Gap yang perlu diperbaiki:
+
+Req 1: TELEGRAM_PHOTO_ARCHIVE_CHANNEL_ID belum wajib di production validation
+Req 3: caption archive belum pakai format 🐔 FOTO AYAM + Kandang + User
+Req 6: /foto_list belum tampilkan reference Telegram (link pesan channel)
+Req 7: teks limit belum persis ⚠️ Batas foto hari ini sudah tercapai (3 foto).
+Req 15: belum ada README dokumentasi foto
+Mulai dengan req 1 — production validation:
+
+Requirement 3: caption archive. Tambah helper di formatters.ts:
+
+Sekarang update router: caption archive pakai format baru, limit text, link reference di /foto_list:
+
+coopNameOf didefinisikan di line 317, setelah pemakaian di line 243 — hoisting function declaration aman di JS. Sekarang update /foto_list agar tampilkan link reference Telegram:
+
+Sekarang update router /foto_list untuk menyertakan link per foto setelah summary:
+
 
 
 

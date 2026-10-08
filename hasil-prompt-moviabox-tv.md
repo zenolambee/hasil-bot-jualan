@@ -7,7 +7,25 @@
 
 
 
+Selesai dan terverifikasi. Ini laporannya:
 
+WORKFLOW: PASS
+RUN ID: 37710566724
+COMMIT: ad64ce8b137f16058991f16af1697ea81c071bfd (ci: build and publish debug APK artifact)
+BUILD: PASS
+TEST: PASS (18 tests, 0 failures, 0 errors, 0 skipped)
+APK SIZE: 9.9M (10.295.366 bytes)
+APK SHA-256: af1ec4d89392c3fe981303df1d622d5bd26a03ed9ea3e79343004d0b7dafd112
+ARTIFACT: moviebox-tv-debug-apk
+ARTIFACT STATUS: available (sudah aku download juga buat memastikan bisa didownload)
+
+Detailnya:
+
+Workflow Build Debug APK ter-commit ke main dan push otomatis men-trigger run — selesai dalam 4 menit, semua 8 step hijau (checkout, JDK 17, build, unit test, verifikasi APK, upload artifact, build report).
+APK-nya dibuat fresh oleh GitHub Actions dari source main terbaru, bukan APK lama.
+Yang di-upload cuma file APK-nya saja — tidak ada moviebox.properties, API key, token, atau secret.
+Satu catatan kecil: di log muncul warning deprecation (Node 20, setup-java@v4, ubuntu-latest) — itu kosmetik saja, tidak mengganggu hasil.
+Run-nya bisa kamu lihat di: https://github.com/zenolambee/moviebox-tv/actions/runs/37710566724 — artifact moviebox-tv-debug-apk tinggal didownload dari sana.
 
 
 

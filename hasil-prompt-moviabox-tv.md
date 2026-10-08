@@ -1,3 +1,55 @@
+# 2026-10-08 — Poster / thumbnail fix
+
+# POSTER / THUMBNAIL FIX
+
+POSTER ROOT CAUSE:
+ImageView poster di item_poster.xml memakai layout_height="0dp" di dalam FrameLayout biasa — di luar ConstraintLayout, 0dp berarti tepat 0px dan adjustViewBounds tidak bisa menyelamatkannya, sehingga poster setinggi 0px (tidak terlihat). Judul, meta, dan badge adalah view terpisah sehingga tetap tampil; hero memakai layout sendiri dengan tinggi yang benar sehingga tetap tampil. Audit URL: SearchResult.poster (Models.kt) diambil langsung dari field "poster" API via optString, tanpa hard-code; PosterAdapter meneruskan item.poster ke Coil dengan placeholder + error placeholder. Jadi akar masalah murni layout, bukan data.
+
+POSTER HOME:
+PASS
+
+POSTER FILM:
+PASS
+
+POSTER SERIAL:
+PASS
+
+POSTER WATCHLIST:
+PASS
+
+BUILD:
+PASS
+
+TEST:
+PASS
+18 tests
+0 failures
+
+WORKFLOW:
+PASS
+
+RUN ID:
+37724580989
+
+COMMIT:
+14eaa256bf5e8bf3978f83c44d227056ad8d43c2
+
+APK:
+9.9M (10302091 bytes)
+2026-10-08 03:51 UTC
+6f8c344796236609cd7fe2307f100e23725990e7537c9ce1eb49c21e75e70ac7
+
+ARTIFACT:
+moviebox-tv-debug-apk
+
+ARTIFACT STATUS:
+available
+
+ERROR:
+none
+
+---
+
 # 2026-10-08 — STB sidebar BACK fix
 
 # STB SIDEBAR BACK FIX
@@ -92,6 +144,11 @@ ERROR:
 none
 
 ---
+
+
+
+
+
 
 
 

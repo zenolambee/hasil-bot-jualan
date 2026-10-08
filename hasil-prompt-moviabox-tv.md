@@ -1,3 +1,32 @@
+
+
+Fase RESPONSIVE HP + TV selesai. Laporan # RESPONSIVE HP + TV FIX sudah terbit di repo laporan.
+
+Hasil verifikasi:
+
+MOBILE SEARCH: PASS — render 360dp, input usable
+MOBILE DETAIL: PASS — ScrollView, semua ID, title 3 baris
+TV DETAIL: PASS — tanpa ScrollView, poster 220dp
+MOBILE/TV HOME: PASS (komponen) — grid span 2/5, hero & poster ter-render
+TV SEARCH: PASS (shared layout)
+MOBILE/TV PLAYER: OUT OF SCOPE — tak diubah (constraint)
+SIDEBAR, D-PAD, POSTER: PASS — dipertahankan/tak diubah
+BUILD: PASS — ./gradlew clean assembleDebug
+TEST: 30/30 PASS (18 lama + 12 baru)
+Bukti:
+
+Run: 37744582397 (SUCCESS)
+Commit: a7db962f0f741158665e2610740436100e9da428
+APK: 10.316.867 bytes, 2026-10-08 07:41 UTC
+SHA-256: b8504179ded9b8bfddf642232a507e48b321d7be5dd41f4d8fdbfaf8b72f70e3
+Artefak moviebox-tv-debug-apk: ada & terunduh
+Catatan jujur:
+
+12 test baru menjalankan measure/layout sungguhan pada qualifier HP vs TV — bukan sekadar cek XML. Sempat 4x gagal karena bug di helper test-ku sendiri (measure() mengabaikan LayoutParams), sudah diperbaiki.
+HARDWARE STB: NOT TESTED — uji visual di perangkat fisik tetap menunggumu.
+Error: tidak ada.
+
+
 # RESPONSIVE HP + TV FIX
 
 Satu APK: UI HP responsif (mobile-first) + UI Android TV/STB sinematik tetap dipertahankan. Via resource qualifiers (default mobile, values-sw600dp, values-television/layout-television). Tanpa deteksi orientasi, tanpa WebView.

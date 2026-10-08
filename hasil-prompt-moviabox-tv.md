@@ -1,3 +1,51 @@
+# 2026-10-08 — STB sidebar BACK fix
+
+# STB SIDEBAR BACK FIX
+
+SIDEBAR OPEN:
+PASS
+
+BACK CLOSE SIDEBAR:
+PASS
+
+SECOND BACK:
+PASS
+
+D-PAD LOGIC:
+PASS
+
+BUILD:
+PASS
+
+TEST:
+PASS
+18 tests
+0 failures
+
+WORKFLOW:
+PASS
+
+RUN ID:
+37723136143
+
+COMMIT:
+3ab8ec699aba48cd97a0f304f814bcff83abd3ad
+
+APK:
+9.9M (10302023 bytes)
+2026-10-08 03:32 UTC
+80358371cbba90d557368ab0cdcda6181494b1a25d6bc7652904fa85f46d3c8e
+
+ARTIFACT:
+moviebox-tv-debug-apk
+
+ARTIFACT STATUS:
+available
+
+HARDWARE STB:
+NOT TESTED
+
+---
 # 2026-10-08 — Sidebar fix verification (moviebox-tv)
 
 SIDEBAR FIX:

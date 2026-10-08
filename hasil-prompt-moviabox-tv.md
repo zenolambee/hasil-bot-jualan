@@ -3,28 +3,24 @@
 
 
 
-Selesai. Laporan:
+Push berhasil. Remote origin/main sekarang = 0430fb3 (sama dengan lokal).
 
-1. Commit SHA: af2dc34 — fix: allow safe closed batch deletion, ter-push ke origin/main (2913bc9..af2dc34).
+Ringkasan integrasi:
 
-2. File yang berubah (15 file, +299/−78):
+Push pertama ditolak karena remote sudah maju 27 commit (ada pekerjaan paralel "fix: repair search and episode navigation").
+Saya rebase commit daf6546 ke atas origin/main, menyelesaikan konflik di 7 file, mengadopsi pendekatan remote yang lebih baru (resource integers.xml/dimensi responsif, layout detail mobile-first) lalu menggabungkan logika saya.
+Verifikasi setelah rebase: testDebugUnitTest 50 test PASS, 0 gagal; assembleDebug BUILD SUCCESSFUL.
+Commit akhir: 68190c9 (fix) + 0430fb3 (docs), keduanya sudah ter-push ke origin/main.
+Bersihkan file kredensial sementara.
 
-lib/batch/service.ts — deleteBatch baru: hanya CLOSED, cleanup semua dependents
-lib/batch/errors.ts, lib/batch/index.ts — error BatchStillActive baru
-lib/recording/ports.ts, lib/sampling/ports.ts, lib/photo/ports.ts — deleteByBatch? di ports
-lib/sheets/repositories.ts — deleteByBatch (delete row bottom-up per batchId) untuk DailyRecording, WeightSampling, ChickenPhotos
-lib/telegram/errors.ts — mapping BatchStillActive → pesan lifecycle, batchNotStartedCloseText, batchAlreadyClosedText
-lib/telegram/formatters.ts — konfirmasi hapus format baru "⚠️ HAPUS BATCH PERMANEN" + Tanggal Selesai
-lib/telegram/router.ts — guard ACTIVE di BATCH_DELETE_CODE, re-verify batch saat confirm, future batch close guard
-lib/telegram/commands.ts — deskripsi batch_delete akurat
-Tests: service.test.ts, batch-delete.test.ts, batch-close.test.ts, photo.test.ts
-3. Typecheck: PASS 4. Lint: PASS 5. Build: PASS 6. Test: 486 passed / 28 failed — 28 failure adalah baseline Windows EPERM pre-existing (lease.test.ts 13, sqlite-store.test.ts 11, router-durable.test.ts 4; identik dengan baseline sebelum perubahan). Bukan regression baru. Test lifecycle baru: service 10, batch-delete 16, batch-close 15, photo 21 — semua PASS.
+Selesai. Push berhasil.
 
-7. Status lifecycle:
+Status akhir:
 
-ACTIVE → CLOSED → DELETE: berhasil. /batch_delete pada batch ACTIVE kini menampilkan persis ⚠️ Batch masih ACTIVE.\nGunakan /batch_close terlebih dahulu, lalu /batch_delete. tanpa menghapus apa pun; /batch_close mengubah ACTIVE → CLOSED dengan endDate = business date; CLOSED boleh dihapus.
-CLOSED dengan recording/sampling/photo metadata: berhasil dihapus. deleteBatch menghapus rows DailyRecording (by batchId col 22), WeightSampling (col 2), ChickenPhotos metadata (col 2), BatchAbwStandards, lalu Batch row — bottom-up delete sehingga nomor row tetap valid. Foto Telegram archive channel tidak disentuh (arsip permanen). Konfirmasi tetap wajib dengan tombol 🗑️ Ya, Hapus Batch / ❌ Batal; confirm re-verify batch masih ada & CLOSED (aman retry/double callback), batch lain tidak pernah terhapus. Future batch close memberi pesan ⚠️ Batch belum dimulai. (bukan "Data tidak valid."), dan /batch_close pada batch CLOSED menampilkan ⚠️ Batch sudah CLOSED. tanpa mutation kedua
-
+origin/main = 0430fb3 (sinkron dengan lokal).
+Commit: 68190c9 android: fix search focus flow and episode selection (STB + phone) + 0430fb3 docs: record verified build after rebase.
+Verifikasi: 50 test PASS, 0 gagal, assembleDebug BUILD SUCCESSFUL — tidak ada perubahan pada /api/stream, token, PlayerManager, StreamResolver.
+Catatan: push pertama terhalang karena remote sudah maju 27 commit (ada pekerjaan paralel). Saya rebase ke origin/main, resolusi konflik dengan mengadopsi layout responsif remote + logika SEARCH/EPISODE saya, lalu push. File kredensial sementara sudah dihapus.
 
 Selesai. Ringkasan:
 

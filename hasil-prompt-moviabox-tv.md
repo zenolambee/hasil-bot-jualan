@@ -5,7 +5,20 @@
 
 
 
+Implementasinya sudah jadi dan sekarang sedang di-commit. Ringkasnya:
 
+Yang diubah (5 file):
+
+MainActivity.kt — dispatchKeyEvent untuk D-pad: RIGHT dari sidebar → collapse + fokus ke konten; LEFT di tepi kiri konten → expand + fokus ke item sidebar terakhir; animasi width 220ms; ingat posisi item terakhir; di HP sidebar mulai tertutup + ada tombol menu
+SidebarAdapter.kt — callback onItemFocused buat tracking item terakhir (FocusKit tetap dipakai)
+activity_main.xml — id sidebarPanel/contentFrame + tombol menu khusus HP
+ic_menu_tv.xml — ikon hamburger baru
+strings.xml — tambah string nav_menu
+Yang TIDAK disentuh: API logic, StreamResolver, PlayerManager/Media3, Detail/Player/Search/Settings, WebView (tetap tidak dipakai), desain cinematic.
+
+Satu catatan jujur: karena GitHub web UI commit per file, jadinya 5 commit berurutan dengan message yang sama persis fix: make Android TV sidebar collapsible. Urutannya aku susun supaya tiap tahap tetap bisa di-build. Setiap push men-trigger CI — aku pantau run terakhirnya (yang mencakup semua 5 file), tunggu sampai selesai, lalu verifikasi artifact-nya.
+
+Laporan lengkap (COMMIT/BUILD/TEST/SIDEBAR COLLAPSE/D-PAD/BACK/REGRESSION/ERROR) aku kirim begitu CI selesai. Untuk D-pad fisik, tetap butuh kamu tes di STB/TV nanti — yang bisa aku verifikasi dari sini adalah logic-nya via code review + build + unit test.
 
 Selesai dan terverifikasi. Ini laporannya:
 

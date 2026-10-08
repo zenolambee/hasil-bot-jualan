@@ -3,6 +3,50 @@
 
 
 
+
+
+
+SELESAI. Semua fitur terimplementasi, ter-commit, dan ter-push.
+
+1. SHA Commit
+656009d — feat: add daily chicken photos and safe batch deletion (push ke origin/main: b708531..656009d)
+
+2. Daftar File Berubah (24 file, +959/−22)
+Baru: lib/photo/ports.ts, lib/telegram/photo.test.ts (15 test), lib/telegram/quick-record-loading.test.ts (10 test)
+Modifikasi: types/domain.ts + types/index.ts + types/environment.ts, config/environment.ts, .env.example, lib/batch/{service,errors,index}.ts, lib/sheets/{headers,serialization,repositories}.ts, lib/telegram/{index,router,errors,formatters,callback,conversation,commands}.ts, lib/telegram/commands.test.ts, lib/recording/feed-accumulation.test.ts, app/api/telegram/webhook/route.ts
+3–6. Hasil Quality Check
+Check	Hasil
+npm run typecheck	PASS (exit 0)
+npm run lint	PASS (exit 0)
+npm run build	PASS (exit 0)
+npm test	472 passed / 28 failed — semua 28 failure adalah baseline pre-existing (EPERM cleanup temp-dir SQLite Windows di lease.test.ts 13, sqlite-store.test.ts 11, router-durable.test.ts 4; terverifikasi identik pada tree bersih via git stash)
+Test fitur spesifik: 15/15 foto, 14/14 batch-delete, 10/10 loading, 8/8 feed-accumulation PASS.
+
+7. Flow /batch_delete
+/batch_delete → minta kode → tidak ditemukan: ❌ Batch tidak ditemukan. → ditemukan: detail + keyboard signed [Ya, Hapus Batch]/[Batal] (text YA/BATAL tetap didukung) → guard: hanya ACTIVE, ditolak jika ada DailyRecording/WeightSampling/ChickenPhotos → hapus Batches row + BatchAbwStandards (bottom-up). MasterKandang/Pakan/Config/Conversation/Idempotency/batch lain tidak disentuh. Durable mutation + idempotency existing → double confirm aman. Batal: Penghapusan batch dibatalkan.
+
+8. Flow /foto
+/foto → validasi workflow aktif → tidak ada ACTIVE batch: ⚠️ Tidak ada batch aktif. → batch future: ⚠️ Batch belum dimulai. Tanggal masuk: ... Foto belum dapat ditambahkan... → prompt (batch/tanggal/umur otomatis dari business date + rumus existing selisihHari+1) + keyboard [⏭️ Lewati] (signed callback) → user kirim foto → validasi ACTIVE + belum dimulai + maks 3/hari → kirim foto ke channel arsip dulu → baru simpan metadata → ✅ Foto ayam tersimpan. ... Foto: N/3. Foto ke-4: ⚠️ Maksimal 3 foto ayam per hari. /foto_list (+opsional YYYY-MM-DD) menampilkan metadata dan kirim ulang foto via telegramFileId (tanpa download ke VPS). /daily tidak diubah — foto tetap opsional terpisah.
+
+9. Lokasi Penyimpanan Foto
+Foto asli → channel Telegram arsip (TELEGRAM_PHOTO_ARCHIVE_CHANNEL_ID), via sendPhoto by file_id
+Google Sheets → metadata saja (sheet ChickenPhotos)
+VPS/SQLite/Sheets → tidak pernah menyimpan binary; tidak ada download file
+10. Struktur ChickenPhotos
+id, batchId, date, ageDay, telegramFileId, telegramFileUniqueId, channelId, channelMessageId, createdAt, updatedAt — sheet baru via ensureSheet, urutan kolom sheet existing tidak berubah. Repository: create, listByBatch, listByBatchAndDate, countByBatchAndDate, findByChannelMessageId (anti-duplikat retry).
+
+11. Environment Variable Baru
+TELEGRAM_PHOTO_ARCHIVE_CHANNEL_ID (opsional, format -100xxxxxxxxxx, tidak di-hardcode, terdokumentasi di .env.example tanpa secret; kosong = /foto memberi pesan channel belum dikonfigurasi, metadata tidak dibuat).
+
+12. Loading Quick Record
+/mati|/afkir|/terjual|/pakan|/air → ⏳ Menyimpan data... dikirim sebelum operasi Sheets (message_id disimpan) → diedit menjadi hasil sukses/error/BatchNotStarted; tanpa artificial delay; edit gagal → fallback pesan baru; tidak ada loading tertinggal. Method sendMessageReturnId/editMessageText bersifat optional → fake TelegramService existing tetap kompatibel.
+
+Catatan: channel arsip harus menambahkan bot sebagai admin dengan izin post photo. Deploy Vercel tidak dilakukan dari agent sesuai instruksi.
+
+
+
+
+
 Jumlah row per sheet (setelah penghapusan)
 Sheet	Data row	Status
 Batches	0	✓ kosong (3 row dihapus: termasuk BF-2026-10/12)

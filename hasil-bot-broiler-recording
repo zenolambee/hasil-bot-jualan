@@ -1,7 +1,27 @@
 
 
 
+Selesai. Laporan:
 
+1. Commit SHA: af2dc34 — fix: allow safe closed batch deletion, ter-push ke origin/main (2913bc9..af2dc34).
+
+2. File yang berubah (15 file, +299/−78):
+
+lib/batch/service.ts — deleteBatch baru: hanya CLOSED, cleanup semua dependents
+lib/batch/errors.ts, lib/batch/index.ts — error BatchStillActive baru
+lib/recording/ports.ts, lib/sampling/ports.ts, lib/photo/ports.ts — deleteByBatch? di ports
+lib/sheets/repositories.ts — deleteByBatch (delete row bottom-up per batchId) untuk DailyRecording, WeightSampling, ChickenPhotos
+lib/telegram/errors.ts — mapping BatchStillActive → pesan lifecycle, batchNotStartedCloseText, batchAlreadyClosedText
+lib/telegram/formatters.ts — konfirmasi hapus format baru "⚠️ HAPUS BATCH PERMANEN" + Tanggal Selesai
+lib/telegram/router.ts — guard ACTIVE di BATCH_DELETE_CODE, re-verify batch saat confirm, future batch close guard
+lib/telegram/commands.ts — deskripsi batch_delete akurat
+Tests: service.test.ts, batch-delete.test.ts, batch-close.test.ts, photo.test.ts
+3. Typecheck: PASS 4. Lint: PASS 5. Build: PASS 6. Test: 486 passed / 28 failed — 28 failure adalah baseline Windows EPERM pre-existing (lease.test.ts 13, sqlite-store.test.ts 11, router-durable.test.ts 4; identik dengan baseline sebelum perubahan). Bukan regression baru. Test lifecycle baru: service 10, batch-delete 16, batch-close 15, photo 21 — semua PASS.
+
+7. Status lifecycle:
+
+ACTIVE → CLOSED → DELETE: berhasil. /batch_delete pada batch ACTIVE kini menampilkan persis ⚠️ Batch masih ACTIVE.\nGunakan /batch_close terlebih dahulu, lalu /batch_delete. tanpa menghapus apa pun; /batch_close mengubah ACTIVE → CLOSED dengan endDate = business date; CLOSED boleh dihapus.
+CLOSED dengan recording/sampling/photo metadata: berhasil dihapus. deleteBatch menghapus rows DailyRecording (by batchId col 22), WeightSampling (col 2), ChickenPhotos metadata (col 2), BatchAbwStandards, lalu Batch row — bottom-up delete sehingga nomor row tetap valid. Foto Telegram archive channel tidak disentuh (arsip permanen). Konfirmasi tetap wajib dengan tombol 🗑️ Ya, Hapus Batch / ❌ Batal; confirm re-verify batch masih ada & CLOSED (aman retry/double callback), batch lain tidak pernah terhapus. Future batch close memberi pesan ⚠️ Batch belum dimulai. (bukan "Data tidak valid."), dan /batch_close pada batch CLOSED menampilkan ⚠️ Batch sudah CLOSED. tanpa mutation kedua.
 
 
 Ya, selesai. Laporan akhir:

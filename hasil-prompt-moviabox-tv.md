@@ -1,3 +1,63 @@
+# RESPONSIVE HP + TV FIX
+
+Satu APK: UI HP responsif (mobile-first) + UI Android TV/STB sinematik tetap dipertahankan. Via resource qualifiers (default mobile, values-sw600dp, values-television/layout-television). Tanpa deteksi orientasi, tanpa WebView.
+
+## Hasil Verifikasi
+
+- MOBILE HOME: PASS (komponen) — grid span 2 terverifikasi via R.integer.grid_span; hero & poster mobile ter-render (lihat POSTER). activity_main container tidak diubah strukturnya.
+- MOBILE SEARCH: PASS — activity_search inflate + measure pada 360dp; searchInput lebar usable (>100dp); tombol back & cari terukur.
+- MOBILE DETAIL: PASS — activity_detail ScrollView vertikal; semua ID ada (backdrop, poster, playButton, epsRecycler, dll); title maxLines 3.
+- MOBILE PLAYER: OUT OF SCOPE — tidak diubah fase ini (constraint: PlayerManager/Media3, playback untouched).
+- TV HOME: PASS (komponen) — grid span 5 terverifikasi; hero & poster TV ter-render; memakai activity_main default (tanpa copy TV).
+- TV SEARCH: PASS (shared) — memakai activity_search default (tanpa copy TV); layout terverifikasi pada mobile.
+- TV DETAIL: PASS — activity_detail dari layout-television (tanpa ScrollView); poster 220dp terukur.
+- TV PLAYER: OUT OF SCOPE — tidak diubah fase ini (constraint: PlayerManager/Media3, playback untouched).
+- SIDEBAR: PASS — tidak diubah; perilaku collapse/expand + BACK dari fase sebelumnya dipertahankan.
+- D-PAD LOGIC: PASS — tidak diubah; navigasi D-pad + FocusKit dari fase sebelumnya dipertahankan.
+- POSTER: PASS — rasio 2:3 terverifikasi via measure/layout nyata; kartu 140dp (mobile rail) / 160dp (TV); tinggi poster 240dp (TV).
+- BUILD: PASS — ./gradlew clean assembleDebug sukses di CI.
+- TEST: 30/30 PASS — 18 test lama + 12 test baru ResponsiveLayoutTest (0 failures, 0 errors, 0 skipped).
+
+## Detail 12 Test Baru
+
+ResponsiveLayoutTest menjalankan measure/layout pass sungguhan pada layout asli dengan qualifier mobile vs television (bukan sekadar cek XML):
+1. mobile grid poster rasio 2:3, lebar poster = kartu 160dp − padding
+2. mobile rail poster kartu fixed 140dp, rasio 2:3
+3. tv poster kartu fixed 160dp, tinggi poster 240dp
+4. tv rail poster kartu fixed 160dp, tinggi poster 240dp
+5. grid span 2 (mobile default)
+6. grid span 3 (sw600dp)
+7. grid span 5 (television)
+8. mobile hero: title max 3 lines, tinggi kompak 260dp (≤300dp), tombol play terukur
+9. tv hero: tinggi sinematik 420dp
+10. mobile detail: ScrollView vertikal + 13 ID wajib ada
+11. tv detail: tanpa ScrollView, poster 220dp
+12. mobile search: input usable pada 360dp
+
+Bug helper test yang ditemukan & diperbaiki: View.measure() langsung mengabaikan LayoutParams milik view (kartu 140dp terukur 400px). Diperbaiki via ViewGroup.getChildMeasureSpec().
+
+## CI & Artefak
+
+- Workflow: Build Debug APK
+- Run ID: 37744582397
+- URL: https://github.com/zenolambee/moviebox-tv/actions/runs/37744582397
+- Status: SUCCESS
+- Commit SHA: a7db962f0f741158665e2610740436100e9da428
+- APK: 10,316,867 bytes (9.9M), timestamp 2026-10-08 07:41 UTC
+- SHA-256: b8504179ded9b8bfddf642232a507e48b321d7be5dd41f4d8fdbfaf8b72f70e3
+- Artifact: moviebox-tv-debug-apk — LISTED & DOWNLOADED
+
+## Regression
+
+API, StreamResolver, PlayerManager/Media3, token, fallback, cache, playback behavior: TIDAK DIUBAH. Tanpa WebView. Tanpa deteksi HP via orientasi. File TV di layout-television/ identik secara fungsional dengan versi pra-responsif (hanya beda baris kosong kosmetik).
+
+## Keterbatasan & Error
+
+- HARDWARE STB: NOT TESTED — verifikasi agen via source logic + Robolectric + CI saja. Uji visual D-pad/sidebar/poster di STB/TV fisik menunggu user.
+- Error status: TIDAK ADA — build sukses, 30/30 test lolos, artefak terbit.
+
+---
+
 # 2026-10-08 — Poster / thumbnail fix
 
 # POSTER / THUMBNAIL FIX
@@ -194,7 +254,6 @@ Run-nya bisa kamu lihat di: https://github.com/zenolambee/moviebox-tv/actions/ru
 
 
 
-
 PASS
 
 18 tests
@@ -285,7 +344,6 @@ Repo moviebox-tv tidak saya ubah (git status bersih); APK repo lama stale, janga
 Rekomendasi perbaikan permanen (perlu persetujuan, hanya build-file): hapus version di app/build.gradle.kts baris 5 agar memakai versi dari root build.gradle.kts — id("org.jetbrains.kotlin.android") (tanpa versi). Mau saya terapkan + rebuild + commit?
 
 
-
 Porting ke APK Android TV native selesai.
 
 Yang dikerjakan:
@@ -299,8 +357,6 @@ Verifikasi: assembleDebug BUILD SUCCESSFUL (APK 9.9 MB), 18 unit test PASS, 0 ga
 Commit: 8afb39b dengan message persis "android: port cinematic tvplay UI to native Android TV" (terpaksa jadi 2 commit karena batas teknis ukuran payload — commit pertama yang membawa message persis itu; commit kedua resources + README).
 
 Satu catatan jujur: testing di perangkat TV fisik tidak bisa dilakukan dari sini — checklist manual A–O (D-pad di hardware asli, dsb.) perlu kamu coba langsung di STB/TV. Kalau ada yang perlu diperbaiki setelah dicoba, kabari aku.
-
-
 
 
 
@@ -322,7 +378,6 @@ Silakan dicek di repo. Kalau ada detail tampilan yang mau disesuaikan, tinggal b
 
 
 
-
 Ringkasan
 Audit: seluruh source Android tetap di app/ (tidak diubah), tvplay/index.html tetap behavioral reference, API_SPEC.md tetap contract. Hanya tvplay/index.html + tvplay/README.md yang diubah — tanpa fitur di luar permintaan.
 
@@ -341,6 +396,7 @@ Verifikasi (bukan klaim)
 Mock API + Chrome headless (Playwright) menjalankan 39/39 PASS, mencakup semua 20 acceptance criteria (persist config, health tanpa key, key di search/detail, play-only, mapping HLS/progressive, token expiry, 401 re-resolve, 502 fallback maks 2, 429 backoff 20 s, switch posisi, cache, tanpa secret di UI, 0 JS error). Hasil ditulis di commit message + tvplay/README.md.
 
 Commit: ddfe681 — tvplay: REST API web tester + persist config (localStorage)
+
 
 
 Audit hasil
@@ -368,17 +424,6 @@ Working tree bersih; local.properties (path SDK temp) ter-gitignore.
 Acceptance: BUILD = PASS · UNIT TEST = PASS · APK EXISTS = PASS · NO COMPILE ERROR · NO TODO (fitur wajib).
 
 Berhenti di sini — tidak menambah fitur. Catatan: build lokal tak dapat diverifikasi tanpa toolchain; di mesin ber-SDK cukup .\gradlew.bat assembleDebug testDebugUnitTest.
-
-
-
-
-
-
-
-
-
-
-
 
 
 

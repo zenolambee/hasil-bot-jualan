@@ -1,6 +1,31 @@
 
 
 
+SELESAI — SEARCH TV KOMPOSISI DUA PANEL ✅
+Akar masalah: Layout TV masih form vertikal ala mobile (baris judul, baris search bar, konten di bawah) — cuma diperbesar, bukan komposisi TV.
+
+Komposisi baru (bukan sekadar resize):
+
+Panel kiri 380dp ala sidebar Home: tombol kembali, judul, kolom cari + tombol hapus, tombol Cari, filter Semua / Film / Serial
+Area kanan full: grid poster sinematik 5 kolom mengisi layar
+D-pad: UP/DOWN di panel, RIGHT ke grid, LEFT dari kolom pertama balik ke panel, fokus biru + scale konsisten sama Home
+Mobile tetap vertikal (emang bener buat HP) — qualifier TV kebukti kepilih via test
+Keputusan jujur: rekomendasi nggak ditampilkan — audit buktiin nggak ada endpoint/cache trending di repo, jadi bikin "rekomendasi" = data palsu. Idle state tampil elegan, poster asli dari API pas ada hasil.
+
+File diubah (7, PR #8, diff bersih): layout-television/activity_search.xml, dimens TV, strings, SearchViewModel.kt (filter client-side), SearchActivity.kt (chips + D-pad), 2 file test baru.
+
+Hasil:
+
+BUILD: PASS | TEST: PASS — 56 test, 0 gagal (50 lama + 6 baru: 4 filter + 2 komposisi qualifier)
+COMMIT (merge): 49aff5b2feccc29b6702321b5afa11232d3cc429
+RUN: https://github.com/zenolambee/moviebox-tv/actions/runs/37898345252
+APK: 10.341.798 bytes (9,9M), 2026-10-09 07:20 UTC
+SHA-256: db9b5d9f7e97f2b6beb5c5d9d24ea02dba2030cfbad5446106377957da80f634
+ARTIFACT: moviebox-tv-debug-apk — https://github.com/zenolambee/moviebox-tv/actions/runs/37898345252/artifacts/7394494810
+API, player, detail, token, fallback: tidak disentuh
+HARDWARE STB: NOT TESTED
+
+
 SELESAI — DESAIN ULANG HALAMAN PENCARIAN ALA NETFLIX ✅
 Akar masalah: Layout TV (layout-television/activity_search.xml) cuma salinan form mobile yang diperbesar — tombol Kembali + kolom input + tombol Cari mendominasi atas layar, error numpang di teks kosong tanpa tombol retry, keyboard auto-muncul pas halaman dibuka, dan fokus hilang setelah tutup detail.
 

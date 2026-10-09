@@ -4,6 +4,34 @@
 
 
 
+
+
+Selesai — FIX FUTURE BATCH DIRECT DELETE
+Root cause: BatchService.deleteBatch menolak semua batch ACTIVE tanpa membedakan yang belum dimulai, sedangkan /batch_close menolak batch future-dated → deadlock lifecycle.
+
+Commit: 75d7cec — fix: allow direct delete of empty future-dated ACTIVE batches (terpush ke origin/main, 6e76c5b..75d7cec); 10 file, +188/−22.
+
+Perubahan:
+
+lib/batch/service.ts — deleteBatch mengizinkan ACTIVE dengan startDate > this.today() (dep today? baru, default businessDate(APP_TIMEZONE); production wired businessDate(applicationTimezone) di route.ts), dengan syarat probe directDeleteBlockers (baru, per batchId) menemukan 0 recording/sampling/foto; ABW standards tidak pernah menghalangi (seed rows, ikut cascade). Batch ACTIVE yang sudah mulai tetap BatchStillActive. Cleanup gagal → baris batch utama tetap ada, retry idempoten; tanggal tidak pernah diubah.
+lib/batch/errors.ts — error baru BatchHasOperationalData membawa counts penghalang; dipetakan di lib/telegram/errors.ts menjadi pesan yang menjelaskan data apa yang menghalangi (tanpa auto-delete).
+lib/telegram/router.ts — pre-check di BATCH_DELETE_CODE; konfirmasi (batchDeleteConfirmationText + flag futureBatch) tetap wajib, memuat kode batch, keyboard 🗑️ Ya, Hapus Batch/❌ Batal. CLOSED cascade tak berubah; foto archive & master data tak disentuh.
+docs/TELEGRAM.md — dokumentasi alur baru.
+Hasil test:
+
+Target (service + telegram batch-delete): 33/33 pass — mencakup seluruh skenario wajib (future+empty sukses; future+recording/sampling/foto ditolak dengan pesan counts; started ACTIVE wajib close; CLOSED cascade; cleanup failure → batch utama ada + retry lanjut (route.dependencies.test.ts); batch lain selamat; test lama batch deletion tetap lulus).
+Full suite: 488 pass / 35 fail — 35 fail identik dengan baseline (stash-verified: 481 pass / 35 fail; lease, sqlite-store, router-durable, photo, quick-record-loading — pra-ada, tak terkait). Nol regresi (net +7 test lulus).
+typecheck ✓ lint ✓ build ✓.
+Status deploy: push ke origin/main berhasil; webhook production masih OFF, belum dideploy, belum diuji di produksi (tidak ada klaim sebaliknya).
+
+Langkah uji Telegram (setelah webhook ON): daftar lengkap ada di catatan hasil — create batch future → /batch_delete → konfirmasi "dihapus langsung tanpa /batch_close" → hapus; ulangi dengan recording → ditolak + pesan penghalang; batch started → close dulu → delete; /batch cek batch lain selamat.
+
+Catatan hasil: hasil-bot-jualan — file baru FIX-batch-delete-future-2026-10-09.md, commit lokal fb68528
+
+
+
+
+
 Done — pushed to main
 Commit: 6e76c5b — fix: wire deleteByBatch cascade cleanup into production BatchService (zenolambee/broiler-recording, af2dc34..6e76c5b)
 

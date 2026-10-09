@@ -1,6 +1,54 @@
 
 
 
+
+Laporan Akhir — Fix Crash Tombol Cari (P0)
+1. Akar Crash (berdasarkan bukti, bukan asumsi)
+Resources$NotFoundException: @dimen/search_panel_width saat inflate SearchActivity.
+
+Rantai bukti:
+
+app/src/main/res/layout-land/activity_search.xml:17 → android:layout_width="@dimen/search_panel_width"
+search_panel_width hanya didefinisikan di values-television/dimens.xml:28 (380dp) — tidak ada di values/dimens.xml
+Commit 0aac59a menambahkan fallback layout-land untuk STB yang tidak melaporkan uiMode television, dan manifest mengunci SearchActivity ke screenOrientation="landscape"
+Dump resource APK (aapt2, sebelum fix): resource 0x7f070351 dimen/search_panel_width (television) 380.000000dp — tanpa entry default
+Alur crash: tombol Cari → startActivity(SearchActivity) → onCreate → inflate layout-land → resolver mencari dimen di values-land (tidak ada) → values (tidak ada) → Resources$NotFoundException → proses Activity mati. Dari sisi user: "tekan Cari = aplikasi keluar".
+
+Build selalu sukses karena AAPT2 menganggap resource valid (terdefinisi di salah satu qualifier). Test lama hanya meng-inflate konfigurasi television/portrait, jadi crash landscape tidak tertangkap.
+
+2. Perubahan Kode (4 file, +265/−1)
+File	Perubahan
+values/dimens.xml:25	FIX UTAMA: tambah <dimen name="search_panel_width">320dp</dimen> sebagai fallback; TV tetap 380dp
+api/ApiClient.kt	Logging terarah di 3 batas: network failure, HTTP error status, parse JSON (tanpa bocor API key/URL)
+test/.../SearchLayoutRegressionTest.kt (baru)	Inflate activity_search pada land, television, portrait + verifikasi 13 ID ViewBinding wajib
+test/.../SearchErrorPathTest.kt (baru)	7 test: empty results, HTTP 502/401, parse gagal, network error, cancellation, stale-result
+Tidak ada perubahan pada kontrak API, PlayerActivity, Media3, endpoint streaming, atau token.
+
+3. Test Regresi
+SearchLayoutRegressionTest (3 test):
+landscape layout must inflate without ResourcesNotFoundException — CRASH (InflateException) sebelum fix, PASSED setelahnya → bukti repro langsung
+television dan portrait inflate penuh dengan semua ID binding
+SearchErrorPathTest (7 test): hasil kosong → Success(empty); HTTP 502/401 → Error berpesan ramah; parse gagal → Error "Respons server tidak dikenali."; network → Error pesan koneksi; cancellation tidak jadi Error; stale result tidak menimpa yang baru
+4. Hasil Build
+./gradlew clean assembleDebug testDebugUnitTest
+BUILD SUCCESSFUL in 10m 40s
+TOTAL: 67 tests, 0 failures, 0 errors
+Lokal + GitHub Actions Build Debug APK: completed / success (job "Build + Test + Publish APK", step unit tests & Build report: success).
+
+5. Commit & APK
+Branch: fix/search-crash-resource-resolution → merge --no-ff ke main
+Commit fix: f174533 | Merge commit (HEAD main): 7fd5056
+APK artifact dari commit perbaikan terbaru: moviebox-tv-debug-apk, workflow run head 7fd5056, 9.034.115 bytes (id 11622397578)
+Download: GitHub repo → Actions → run 7fd5056 → artifact "moviebox-tv-debug-apk"
+Link branch fix: https://github.com/zenolambee/moviebox-tv/tree/fix/search-crash-resource-resolution
+6. Status Verifikasi Crash
+Terverifikasi di CI via repro test: test landscape repro crash nyata sebelum fix (InflateException pada baris inflate yang sama) dan lulus setelahnya — ini bukti kuat root cause sudah ditangani.
+Belum dapat diverifikasi di STB fisik (tidak ada emulator/device di lingkungan ini). Bila perlu konfirmasi di STB:
+adb logcat -c
+adb logcat -v time AndroidRuntime:E SearchActivity:E SearchViewModel:E MovieRepository:E ApiClient:E '*:S'
+Buka app → tekan Cari → masukkan judul → OK. App harus tetap terbuka; loading tampil; hasil/error tampil. Jika ada crash baru, logging ApiClient yang baru akan mencatat exception aslinya
+
+
 SELESAI — SEARCH TV KOMPOSISI DUA PANEL ✅
 Akar masalah: Layout TV masih form vertikal ala mobile (baris judul, baris search bar, konten di bawah) — cuma diperbesar, bukan komposisi TV.
 

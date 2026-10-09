@@ -1,6 +1,24 @@
 
 
 
+
+
+
+Done — pushed to main
+Commit: 6e76c5b — fix: wire deleteByBatch cascade cleanup into production BatchService (zenolambee/broiler-recording, af2dc34..6e76c5b)
+
+Changed files:
+
+app/api/telegram/webhook/route.ts — extracted exported createProductionDependencies(client) factory; BatchService deps now wire deleteByBatch for recordings, samplings, and photos (standards repo passed whole as before); configuredRouter() consumes the factory, behavior identical
+lib/batch/service.ts — deleteBatch comment documents fail-fast cleanup, no cross-sheet rollback, and idempotent retry
+app/api/telegram/webhook/route.dependencies.test.ts — new: multi-sheet fake proving full cascade (order ChickenPhotos → DailyRecording → WeightSampling → BatchAbwStandards → Batches) with other-batch rows surviving, plus mid-cleanup failure → batch row survives → retry completes
+Checks:
+
+typecheck ✓, build ✓, lint ✓
+Tests: new cascade tests ✓ (2/2); route.test.ts, service.test.ts, batch-delete.test.ts, recording-production.test.ts all pass
+Pre-existing unrelated failures (verified identical on clean tree before my change): sqlite-store (11), lease (13), router-durable (4), quick-record-loading (3), photo.test.ts (4) — environment/flaky sqlite & Telegram-fake issues, untouched by this commit
+
+
 Selesai. Laporan:
 
 1. Commit SHA: af2dc34 — fix: allow safe closed batch deletion, ter-push ke origin/main (2913bc9..af2dc34).

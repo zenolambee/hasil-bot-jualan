@@ -1,7 +1,27 @@
 
 
 
+SELESAI — DESAIN ULANG HALAMAN PENCARIAN ALA NETFLIX ✅
+Akar masalah: Layout TV (layout-television/activity_search.xml) cuma salinan form mobile yang diperbesar — tombol Kembali + kolom input + tombol Cari mendominasi atas layar, error numpang di teks kosong tanpa tombol retry, keyboard auto-muncul pas halaman dibuka, dan fokus hilang setelah tutup detail.
 
+Yang diubah (8 file, PR #7):
+
+layout-television/activity_search.xml + layout/activity_search.xml — judul besar "Cari Film & Serial", search bar lebar + ikon + tombol hapus (×), header "Hasil pencarian (N)", grid 5 kolom, error view + tombol "Coba lagi"
+SearchActivity.kt — clear button, no-auto-keyboard, D-pad UP dari grid balik ke search bar, focus restore setelah detail ditutup, render state Idle/Loading/Success/Empty/Error
+SearchViewModel.kt — CancellationException di-rethrow (nggak ada error kedip pas ngetik cepat)
+strings.xml, dimens.xml (mobile + TV)
+SearchViewModelTest.kt — 5 test baru (query kosong, debounce, anti-stale, error mapping, anti-cancel-error)
+Kontrak API tidak berubah: endpoint, header X-API-Key, format JSON, tanpa /api/stream, query kosong tidak panggil API. Detail/player tidak disentuh.
+
+Hasil:
+
+BUILD: PASS | TEST: PASS — 50 test, 0 gagal
+COMMIT (merge): d69f10f8fa14c77f40c1d88e6dc01c0d9e672bb4
+RUN: https://github.com/zenolambee/moviebox-tv/actions/runs/37890639887
+APK: 10.336.602 bytes (9,9M), 2026-10-09 05:53 UTC
+SHA-256: c85bf814e9b086b4e4332bb4493adc307d71f8e2886390d38c914cfef69972b7
+ARTIFACT: moviebox-tv-debug-apk — https://github.com/zenolambee/moviebox-tv/actions/runs/37890639887/artifacts/11597699680
+HARDWARE STB: NOT TESTED
 
 Push berhasil. Remote origin/main sekarang = 0430fb3 (sama dengan lokal).
 

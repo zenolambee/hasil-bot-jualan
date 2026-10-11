@@ -2,6 +2,29 @@
 
 
 
+
+Udah jadi, bro. PR #26 — sistem PIN-only lengkap:
+
+Backend (backend/):
+
+Aktivasi PIN → session cookie (HttpOnly, Secure)
+Proxy ke provider via /b/catalog/* dan /b/stream/*
+Kredensial terenkripsi di SQLite, nggak pernah ke browser
+Admin bisa buat/nonaktifkan/cabut PIN
+Anti brute-force (5x salah → kunci 15 menit)
+
+Frontend:
+
+Halaman "Aktivasi MovieBox TV" — cuma PIN, nggak ada lagi form Base URL/API Key
+Semua API lewat backend, nggak ada X-API-Key di browser
+4 UI Profile tetap jalan (ditentukan backend dari PIN)
+
+Tes: 12/12 backend + 5/5 frontend lolos, 0 error.
+
+Yang masih perlu dari lo nanti: kredensial 4 provider asli (masukin via admin panel pas deploy) + domain/HTTPS.
+
+Merge ke main?
+
 Laporan Akhir — Fix Crash Tombol Cari (P0)
 1. Akar Crash (berdasarkan bukti, bukan asumsi)
 Resources$NotFoundException: @dimen/search_panel_width saat inflate SearchActivity.

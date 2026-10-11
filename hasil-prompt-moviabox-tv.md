@@ -3,6 +3,22 @@
 
 
 
+
+Udah aku pelajari. Kabar baik dan kabar kurang baik:
+
+Bisa: Wasmer Edge dukung Python 3.12, deploy pakai file wasmer.toml + app.yaml, env vars/secrets bisa di-set, HTTPS otomatis, free tier lumayan lega.
+
+Masalahnya: Backend kita pakai SQLite file — dan di Wasmer, database di atas volume "nggak jalan dengan baik" (kata docs-nya sendiri). Jadi sebelum deploy, databasenya harus ganti ke Postgres (Wasmer sediain managed DB gratis 100MB) atau DB eksternal kayak Turso/Neon.
+
+Artinya ada kerjaan adaptasi dulu:
+
+Ganti layer database SQLite → Postgres (kode app.py perlu diubah)
+Bikin wasmer.toml + app.yaml
+Baru wasmer deploy
+
+Mau aku kerjakan adaptasinya sekarang?
+
+
 Udah jadi, bro. PR #26 — sistem PIN-only lengkap:
 
 Backend (backend/):

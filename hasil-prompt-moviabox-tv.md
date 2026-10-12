@@ -3,7 +3,29 @@
 
 
 
-
+Laporan Phase Web Admin — Source + PIN Management + API Integration
+1. File yang diubah (commit 730838d, pushed ke feature/web-pin-api-e2e)
+File	Perubahan
+backend/app.py	Admin session (login/logout/session-check), GET /b/admin/stats, POST /b/admin/sources/<sid>/test + anti-SSRF, PATCH source proses name (bug fix), validasi sourceId + expiresAt di PIN create, /b/session enforce pin/source aktif
+tvplay/admin.html	Baru — Web Admin panel (585 baris): login, dashboard, source CRUD + tes, PIN issue/revoke/unlock/filter, keamanan
+tvplay/index.html	Klaim "kuota perangkat" palsu dihapus, logout menunggu konfirmasi backend, link admin di About
+backend/test_admin_e2e.py	Baru — tes 18 skenario (42 cek) dengan mock provider
+backend/README.md, backend/.env.example, API_SPEC.md	Dokumentasi admin + env baru (ADMIN_SESSION_HOURS, ALLOW_HTTP_PROVIDER)
+2. Fitur yang benar-benar selesai
+Web Admin nyata (/admin.html, dilayani backend, terpisah dari flow PIN user): Dashboard (angka dari DB), Manajemen Source (CRUD, tes koneksi, cari, relasi PIN), Manajemen PIN (terbitkan sekali-tampil + tombol salin, kedaluwarsa, revoke, unlock, filter), Keamanan.
+Sesi admin aman: login POST /b/admin/login (rate limit) → cookie mbtv_admin HttpOnly + CSRF; logout mencabut; password tidak dikirim terus-menerus (header lama masih kompatibel).
+Tes koneksi source oleh backend dengan anti-SSRF (blokir localhost/private/link-local/metadata, validasi DNS, tanpa redirect, timeout 10s, respons ringkas tanpa rahasia).
+API key tetap rahasia: terenkripsi di DB (Fernet), tidak pernah di daftar/detail/log/localStorage.
+Pencabutan langsung berlaku untuk semua sesi pengguna (source nonaktif / PIN revoke).
+3. Tes dijalankan (aktual)
+✅ test_admin_e2e.py: 42/42 PASS (mock provider, tanpa API key nyata): login salah/benar, tanpa sesi→401, CSRF→403, kredensial terenkripsi di DB (dicek langsung ke SQLite), API key tidak bocor, edit pertahankan key, 5 target SSRF diblokir, provider mati tanpa rahasia, PIN hash di DB, source tidak ada/nonaktif ditolak, aktivasi→sesi+profile, PIN salah/kedaluwarsa→401, source nonaktif & PIN revoke → semua sesi user mati, param source_id arbitrer diabaikan, logout admin/user.
+✅ Regresi penuh: test_web_e2e.py 27/27, test_db.py 10/10 · Sintaks PY/JS OK · admin.html & index dilayani 200 · secret scan bersih.
+4. Kendala tersisa
+Tes koneksi "online" terhadap provider HTTPS nyata: NOT RUN — mock http-loopback memang diblokir anti-SSRF (justru bukti kebijakan bekerja); butuh provider HTTPS nyata untuk path sukses.
+Rate limit admin masih in-memory (reset saat restart) — terdokumentasi di panel Keamanan; PostgreSQL integration tetap NOT RUN (lihat Phase 4.9).
+5. Commit / PR
+Commit 730838d di branch feature/web-pin-api-e2e — sudah push.
+** belum ada PR baru untuk fase ini** (branch berisi 3 commit fase 5.0 + admin); PR #39 juga masih open. Bilang saja kalau mau saya buatkan/sealed PR-nya.
 
 
 Laporan Phase 5.0 — Web MovieBox TV + PIN/API End-to-End

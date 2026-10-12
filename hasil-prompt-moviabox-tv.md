@@ -1,7 +1,41 @@
 
 
 
+Laporan Akhir — Final Phase Web Admin + Source + PIN + API
+1. Commit & Branch
+Branch: feature/web-pin-api-e2e @ 2d5dc3c (5 commits, semua pushed sukses)
+Urutan: 573ec4e (fix PIN/session e2e) → e705127 (laporan 5.0) → 730838d (panel admin + admin sessions + source test) → 2d5dc3c (finalize: dashboard, rollback, tes tambahan)
+2. Link PR
+PR #40: https://github.com/zenolambee/moviebox-tv/pull/40 — open, belum merged, stacked di atas PR #39 (Wasmer). Tidak mencampur perubahan Wasmer.
+PR #39 (Wasmer) & PR #13 (layout STB) masih open — tidak disentuh.
+3. Fitur yang benar-benar selesai
+Web Admin panel (/admin.html, responsif HP/desktop, gaya MovieBox): Dashboard (statistik DB + reload + summary), Source CRUD + search/filter + tes koneksi + relasi PIN, PIN issue (plaintext sekali + salin) / revoke / unlock / filter, Keamanan.
+Sesi admin server-side: rate-limited login → mbtv_admin HttpOnly/Secure/SameSite=Lax, sliding 8 jam, logout mencabut; terpisah dari sesi PIN user (dibuksi tes).
+Tes koneksi backend anti-SSRF (blokir localhost/private/link-local/metadata, DNS check, tanpa redirect, respons ringkas).
+Pencabutan langsung, rollback transaksi admin, CSRF di semua mutasi, API key terenkripsi & tidak bocor, PIN hash-only.
+4. Hasil test (semua dijalankan nyata)
+Test	Hasil
+test_admin_e2e.py (mock provider)	✅ 46/46 PASS
+test_web_e2e.py	✅ 27/27 PASS
+test_db.py	✅ 10/10 SQLite PASS
+Sintaks Python + JS (node --check)	✅ OK
+Smoke UI + secret scan	✅ 200, bersih
+PostgreSQL integration	⚠️ NOT RUN (tidak ada test DB)
+Tes koneksi provider HTTPS nyata	⚠️ NOT RUN (butuh provider nyata; mock loopback memang diblokir anti-SSRF)
+5. File penting yang diubah
+backend/app.py (+admin session/stats/test/rollback/validasi), tvplay/admin.html (baru, 600+ baris), tvplay/index.html (teks lama + logout), backend/test_admin_e2e.py (baru), backend/README.md, backend/.env.example, API_SPEC.md.
 
+6. Bug ditemukan & diperbaiki
+PATCH source tidak memproses name → diperbaiki + dites.
+/b/session tidak enforce pin/source aktif → pencabutan tidak langsung berlaku → diperbaiki.
+Provider mati → 500 HTML alih-alih 502 JSON → diperbaiki (fallback server jalan lagi).
+btn-goto-pin tanpa handler; guard s.id undefined; state S.semua* missing → diperbaiki.
+Kredensial sumber rusak memunculkan 500 → kini respons ringkas.
+Lockout PIN manual tidak deterministik di tes → PIN unik per run.
+7. Kendala tersisa
+Rate limit admin in-memory (reset saat restart) — terdokumentasi di panel Keamanan.
+Kuota perangkat per PIN belum diimplementasi — teks UI sudah dikoreksi, batasan tercatat.
+Merge order: PR #39 dulu, baru PR #40 (stacked)
 
 Laporan Phase Web Admin — Source + PIN Management + API Integration
 1. File yang diubah (commit 730838d, pushed ke feature/web-pin-api-e2e)

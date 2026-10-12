@@ -5,6 +5,37 @@
 
 
 
+
+Laporan Phase 5.0 — Web MovieBox TV + PIN/API End-to-End
+Branch & Commit
+Branch: feature/web-pin-api-e2e (pushed) — 2 commits: 573ec4e (fix web) + e705127 (laporan)
+PR URL: https://github.com/zenolambee/moviebox-tv/pull/new/feature/web-pin-api-e2e (belum dibuat PR-nya, menunggu keputusan Anda; PR #39 juga masih open)
+Bug ditemukan & diperbaiki (7)
+Bug	Perbaikan
+Provider mati → 500 HTML (URLError tidak tertangkap)	→ 502 JSON sesuai kontrak, fallback server berjalan lagi
+btn-goto-pin tombol mati (tanpa handler)	Handler ditambahkan
+loadSemuaSection guard s.id undefined → reset race tiap render	Guard pakai `name
+State S.semua* tidak diinisialisasi (undefined)	Field lengkap di state awal
+REST API TEST pakai dead code (s.base/s.key tidak ada di PIN-only)	Lewat proxy sesi (/b/healthz, /b/catalog)
+Hint kontrak PIN palsu (/api/pin/activate + baseUrl/apiKey)	Kontrak aktual POST /b/pin/activate {pin}
+SQLite "database is locked" sporadis	WAL + busy_timeout 15s
+Hasil tes aktual
+✅ E2E baru backend/test_web_e2e.py: 27/27 PASS — CSRF 403, PIN salah/format→400/401, PIN valid→sesi HttpOnly + profile benar, refresh session ok, katalog tanpa sesi→401, provider mati→502 (auth lolos), API key tidak bocor, multi-device, pencabutan PIN→semua sesi langsung mati, fallback profile, logout
+✅ SQLite test_db.py: 10/10 PASS · Sintaks PY/JS OK · Frontend 200 (desain Moda + 4 profile + player utuh) · Headers nosniff/DENY/no-referrer · Secret scan bersih
+NOT RUN (jujur)
+Playback video nyata vs provider asli (tidak ada provider/kredensial nyata di lingkungan ini)
+Rerun Playwright (tool tidak terpasang) — UI diverifikasi via smoke HTTP + e2e backend
+PostgreSQL integration (sama seperti Phase 4.9)
+Dokumentasi
+API_SPEC.md: +bagian endpoint /b/* (kontrak PIN-only aktual, mapping 502)
+tvplay/README.md: alur PIN-only + tabel endpoint di-update; mojibake diperbaiki
+docs/MOVIEBOX_PHASE_5_0_REPORT.md: laporan lengkap di repo aplikasi
+Keputusan
+✅ YES — web stabil untuk dilanjutkan ke port Android TV. Alur PIN → katalog → detail → episode → resolver tervalidasi; tidak ada bug kritis autentikasi/session/API/playback yang diketahui
+
+
+
+
 Laporan Akhir Phase 4.9 — Selesai
 Status PR #39 (verifikasi live GitHub API)
 PR: https://github.com/zenolambee/moviebox-tv/pull/39 — open, belum merged (menunggu persetujuan Anda)

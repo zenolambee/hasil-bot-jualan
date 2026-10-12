@@ -3,6 +3,43 @@
 
 
 
+
+
+
+
+
+
+Laporan Akhir Phase 4.9
+Branch & Commit
+Branch: refactor/remove-wasmer-local-windows (pushed)
+Commit: d32ea87 — "refactor: remove Wasmer config, add Windows/local + VPS guides" (14 files, +969/−264)
+PR: https://github.com/zenolambee/moviebox-tv/pull/39 — state open, BELUM merged (menunggu review Anda)
+Push: ✅ sukses ke origin
+Perbaikan bug saat audit
+Sebelum commit saya menemukan bug: default MINIDB_ALLOW="1" membuat PG gagal konek (mis. salah password VPS) diam-diam fallback ke JSON — melanggar prinsip no-silent-fallback. Diperbaiki: default jadi 0 (fail-safe crash); fallback MiniDB hanya jika (a) MINIDB_ALLOW=1 eksplisit DAN (b) error-nya keterbatasan runtime (ssl tidak tersedia), bukan error kredensial. Diuji: PG invalid host → app gagal jelas (ConnectionRefusedError), tidak fallback.
+
+File
+Hapus: wasmer.toml, app.yaml, backend/wasmer.toml, backend/app.yaml
+Buat: docs/LOCAL_WINDOWS_SETUP.md, docs/VPS_DEPLOY_GUIDE.md, docs/MOVIEBOX_PHASE_4_8_REPORT.md, backend/minidb.py
+Ubah: .gitignore, backend/README.md, backend/app.py, backend/requirements.txt, backend/.env.example (+MINIDB_ALLOW/MINIDB_PATH), docs/MOVIEBOX_PHASE_4_7_REPORT.md (update hasil aktual)
+Aman: backend/moviebox.db tidak ter-stage (sudah di .gitignore); scan secret (token wap_, nilai asli) = bersih
+Hasil tes aktual
+Tes	Hasil
+SQLite (test_db.py)	✅ 10/10 PASS
+Startup fail-safe (tanpa env)	✅ gagal jelas
+PG invalid + default MINIDB_ALLOW	✅ fail jelas, tanpa fallback
+Health/readiness lokal	✅ 200/200
+CSRF POST tanpa token	✅ 403
+Auth PIN end-to-end + session	✅ 200
+Frontend	✅ 200
+Sisa referensi Wasmer (kode aktif)	✅ hanya komentar portabilitas
+PostgreSQL integration	NOT RUN — tidak ada test DB di environment ini
+Sebelum merge
+Review PR #39 di GitHub
+Setelah merge: main bersih dari Wasmer
+PG integration test tetap harus dijalankan nyata di VPS (setelah VPS tersedia)
+
+
 Catatan penting
 File acuan hasil-prompt-moviabox-tv.md tidak ditemukan — di zenolambee/hasil-bot-jualan hanya ada file broiler/batch ABW, di laptop juga tidak ada. Sesuai instruksi Anda, hasil kerja dicatat sebagai file baru mengikuti pola repo hasils: PHASE-remove-wasmer-local-windows-2026-10-12.md (isi repo lain tidak diutak-atik).
 

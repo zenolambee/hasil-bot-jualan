@@ -1,6 +1,48 @@
 
 
 
+Laporan Bugfix Blocker — Web Admin MovieBox TV
+1. Commit SHA terbaru
+382747d — fix(security): server-generated PIN, SSRF on all provider paths, admin session-only auth — pushed ke feature/web-pin-api-e2e, otomatis masuk PR #40 (open, tidak dimerge). PR #39 (Wasmer) tetap terpisah, tidak disentuh.
+
+2. File yang berubah (5)
+backend/app.py — PIN generator, SSRF, sesi-only auth, stats
+backend/test_admin_e2e.py — alur UI/request + negative test
+backend/test_web_e2e.py — migrasi ke sesi cookie + server-gen PIN
+API_SPEC.md, backend/README.md — dok ter-update
+3. Hasil test sebenarnya (di-run nyata)
+Test	Hasil
+Python syntax check (ast.parse)	✅ OK
+test_admin_e2e.py	✅ 59/59 PASS
+test_web_e2e.py	✅ 29/29 PASS
+test_db.py	✅ 10/10 SQLite (PostgreSQL: NOT RUN, tanpa TEST_DATABASE_URL)
+node --check (script admin.html + index.html)	✅ OK
+Secret scan	✅ bersih
+PostgreSQL / browser automation / provider nyata	⚠️ NOT RUN (lingkungan tidak tersedia)
+4. Pembuktian tombol Terbitkan PIN bekerja (request = UI btn-pin-save)
+Simulasi persis alur frontend: login → buat source → POST /b/admin/pins body {sourceId, profile, expiresAt} (tanpa pin):
+
+2. buat source: 200 src-78d835ae
+3. TERBITKAN PIN (btn-pin-save): 200 PIN = GAZF-ETW9
+4. format XXXX-XXXX 8 char: True
+5. plaintext TIDAK di DB (hanya hash): True
+Frontend sudah menerima respons, menampilkan di #pin-new, dan tombol salin (navigator.clipboard.writeText) sudah ada.
+
+5. Hasil test SSRF & autentikasi negatif
+SSRF create ditolak 400 (11 kasus): 127.0.0.1, 10.0.0.5, 192.168.1.1, localhost, 169.254.169.254 (metadata AWS), [::1], [fe80::1], 0.0.0.0, ftp://, user:pass@, metadata.google.internal + PATCH baseUrl metadata juga ditolak.
+Negative auth (sesi-only): X-Admin-Pass header tanpa sesi → 401; adminPass body tanpa sesi → 401 (dengan CSRF valid → tetap 401); login salah tanpa cookie; admin session ≠ user PIN session (4b).
+Kebijakan SSRF kini di create + edit + tes koneksi + provider_call() (katalog/stream), dengan DNS pinning anti-rebinding (_open_no_redirect mem-pin koneksi ke IP terverifikasi), tanpa redirect.
+6. Perbaikan utama
+PIN dari UI (blocker ditemukan & diperbaiki): backend dulu mewajibkan field pin → tombol Terbitkan selalu 400. Kini server membangkitkan PIN (secrets, 8 char, alphabet tanpa 0/O/1/I), cek tabrakan hash (maks 20 retry).
+SSRF di semua jalur provider (dulu hanya di tes koneksi): create/edit source kini memvalidasi baseUrl; provider_call() memakai DNS pinning; X-API-Key hanya ke host terverifikasi.
+Sesi admin wajib: fallback adminPass/X-Admin-Pass per-request dihapus total dari need_admin(); hanya /b/admin/login menerima password; sliding expiry memperbarui cookie.
+Bug audit lain: stats tidak menghitung sesi kedaluwarsa; validasi UI Profile (VALID_PROFILES, 4 profil) di create & edit; rollback + revocation langsung tetap bekerja.
+7. Kendala belum terselesaikan
+Rate limit admin in-memory (reset saat restart proses) — didokumentasikan di Keamanan/API_SPEC, bukan diklaim persisten.
+Postgres integration, tes koneksi provider HTTPS nyata (mock path: example.com/health=404 digunakan sebagai bukti pipeline), dan browser automation: NOT RUN.
+PR #39 (Wasmer) masih harus di-merge dulu (stacked
+
+
 Laporan Akhir — Final Phase Web Admin + Source + PIN + API
 1. Commit & Branch
 Branch: feature/web-pin-api-e2e @ 2d5dc3c (5 commits, semua pushed sukses)

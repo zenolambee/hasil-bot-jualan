@@ -2,6 +2,38 @@
 
 
 
+
+
+
+
+Selesai. Ringkasan Phase 4.8:
+
+Status: SELESAI ✅ (branch refactor/remove-wasmer-local-windows, belum commit)
+Dihapus (Wasmer files):
+wasmer.toml, app.yaml (root)
+backend/wasmer.toml, backend/app.yaml (duplikat)
+.wasmer_ignore, .wasmer-site-packages/ (artefak, dari disk)
+Dibuat:
+docs/LOCAL_WINDOWS_SETUP.md — prasyarat, venv, .env, jalan, tes, stop aman (CMD)
+docs/VPS_DEPLOY_GUIDE.md — runtime, env/secret, PostgreSQL, systemd, Nginx+TLS, UFW, backup, update/rollback
+docs/MOVIEBOX_PHASE_4_8_REPORT.md — laporan lengkap
+Diubah:
+.gitignore (+.env*, .venv/, __pycache__/, *.db)
+backend/README.md (deploy wasmer → lokal/VPS)
+backend/app.py + requirements.txt (komentar; fallback WASI & pg8000 dipertahankan)
+Hasil tes aktual:
+✅ test_db.py 10/10 PASS (SQLite)
+✅ Startup fail-safe, server jalan (/b/health, /b/ready 200)
+✅ CSRF 403, headers nosniff/DENY, auth PIN end-to-end 200
+✅ Deps penuh: flask, bcrypt, cryptography, pg8000 (Python 3.12.10)
+⏳ PG integration: SKIP (tidak ada test DB di env ini)
+⏳ PG integration test belum dijalankan nyata — jalankan di VPS atau set TEST_DATABASE_URL.
+Sisa jdul "Wasmer" di kode: hanya komentar fallback portabilitas yang sengaja dipertahankan.
+
+Menunggu konfirmasi Anda untuk commit & push.
+
+
+
 Phase 4.5 selesai, bro.
 
 Yang dikerjain:

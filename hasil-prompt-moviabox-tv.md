@@ -3,7 +3,48 @@
 
 
 
+Catatan penting
+File acuan hasil-prompt-moviabox-tv.md tidak ditemukan — di zenolambee/hasil-bot-jualan hanya ada file broiler/batch ABW, di laptop juga tidak ada. Sesuai instruksi Anda, hasil kerja dicatat sebagai file baru mengikuti pola repo hasils: PHASE-remove-wasmer-local-windows-2026-10-12.md (isi repo lain tidak diutak-atik).
 
+1. Sudah dikerjakan sebelumnya (Phase 4.7)
+Deploy Wasmer SUKSES: https://tvplay-backend.wasmer.app live, smoke test lulus
+Managed Postgres provisioned tapi tidak bisa dipakai (WASI tidak punya ssl, server wajib TLS) → dibuat fallback MiniDB JSON + pure-Python async
+2. Baru selesai (Phase 4.8) — diverifikasi aktual, bukan hanya laporan
+✅ 4 file Wasmer terhapus dari working tree (dicek via if exist): wasmer.toml, app.yaml, backend/wasmer.toml, backend/app.yaml
+✅ .wasmer_ignore + .wasmer-site-packages/ dihapus dari disk
+✅ Pencarian wasmer|wasi di kode aktif → hanya komentar penjelas fallback yang disengaja; 2 README bersih
+✅ Aplikasi jalan di Windows + semua tes lulus
+⚠️ Di main, 2 file Wasmer masih ada — hapus resmi via PR
+3. File (branch refactor/remove-wasmer-local-windows)
+Hapus: 4 file Wasmer
+Buat: docs/LOCAL_WINDOWS_SETUP.md, docs/VPS_DEPLOY_GUIDE.md, docs/MOVIEBOX_PHASE_4_8_REPORT.md, backend/minidb.py
+Ubah: .gitignore (+.env*, .venv/, *.db), backend/README.md, backend/app.py, backend/requirements.txt
+Utuh: fitur, backend, SQLite/Postgres, UI terbaru, database pengguna
+4. Hasil tes aktual
+Tes	Hasil
+test_db.py	✅ 10/10 SQLite PASS
+Server lokal	✅ health/ready 200
+CSRF tanpa token	✅ 403
+Auth PIN end-to-end	✅ 200
+Frontend	✅ 200 (93KB)
+Deps .venv	✅ flask/bcrypt/cryptography/pg8000 (Python 3.12.10)
+PostgreSQL integration	⏳ SKIP — tidak ada test DB di laptop
+5. Jalan di Windows (ringkas)
+python -m venv .venv && .venv\Scripts\activate
+pip install -r requirements.txt
+copy backend\.env.example backend\.env   :: isi CRED_KEY, SECRET_KEY, ADMIN_PASS_HASH
+set CRED_KEY=<...> & set SECRET_KEY=<...> & set ADMIN_PASS_HASH=<...> & set COOKIE_SECURE=0
+cd backend && python app.py   :: http://127.0.0.1:8000/
+6. Status kesiapan
+Lokal: SIAP ✅ | Commit/PR: menunggu otorisasi Anda | VPS: panduan siap, belum deploy
+
+7. Langkah sebelum beli VPS
+Review → commit → push → PR branch ini → merge (hapus Wasmer resmi dari main)
+Siapkan domain + DNS untuk TLS
+Generate secret produksi terpisah (jangan pakai nilai laptop)
+VPS Ubuntu 22.04/Debian 12 min 1GB → ikuti docs/VPS_DEPLOY_GUIDE.md
+Tes PG nyata di VPS (TEST_DATABASE_URL) lalu smoke test checklist §10
+Mau saya commit branch sekarang?
 
 
 Selesai. Ringkasan Phase 4.8:

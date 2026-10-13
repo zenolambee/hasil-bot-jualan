@@ -3,7 +3,25 @@
 
 
 
-
+Laporan — Sidebar Hidden Sebelum Pemilihan Profil
+File diubah
+tvplay/index.html (+49/-7 baris) — frontend saja; backend tidak disentuh.
+CSS: body[data-auth="guest"] #sidebar{display:none} (desktop + mobile) dan body[data-auth="auth"] .view{left:248px} — sidebar & area konten berganti murni via CSS, tanpa flicker (atribut default data-auth="guest" di <body>, berlaku sebelum JS jalan).
+show(): set data-auth = guest untuk v-profile/v-pin, auth untuk view lain.
+init(): sudah ada — cek /b/session ke backend (sumber kebenaran), valid → v-home (sidebar tampil), tidak → v-profile.
+activatePin(): sukses → show('v-home') → sidebar tampil; gagal (401/403/429/network) → tetap v-pin, sidebar hidden.
+btn-logout: setelah sesi dihapus → kembali ke v-profile (sebelumnya v-pin).
+api() 401: sessionExpired() — verifikasi /b/session dulu, bila memang mati → v-profile (mulai ulang dari profil, bukan PIN buta), guard anti double-run.
+v-profile: tambah sub-teks petunjuk; mobile: padding view pra-sesi di atas (tanpa sidebar).
+Test aktual (domtest, backend nyata)
+test_sidebar_flow.js PHASE-A — ALL PASS: buka tanpa sesi → sidebar display:none, v-profile tampil, 31 kartu profil render, 7 menu tetap di DOM; pilih kartu → v-pin (nama sumber di judul), sidebar tetap hidden; PIN salah → error "PIN salah atau tidak dikenal.", tetap guest/hidden.
+test_sidebar_auth.js PHASE-B — ALL PASS (PIN valid via pinpad klik): PIN benar → v-home + sidebar tampil, data-auth=auth, /b/session ok:true; logout → v-profile + sidebar hidden + kartu render ulang.
+Regression: test_admin_e2e.py 59/59, test_web_e2e.py 29/29, test_db.py 10/10, test_admin_ui.js PASS, test_admin_theme.js ALL PASS, test_click.js/test_dom2.js PASS (klik card → detail → player tetap jalan).
+node --check script inline → OK.
+Catatan pengujian visual (jujur)
+Playwright tidak terpasang → pengujianA级 visual via jsdom (computed style display:none sidebar + state DOM), bukan screenshot PNG. Satu snapshot HTML state guest tersimpan (shots/10-web-profile-guest.html).
+Temuan selama uji: respons aktivasi PIN butuh 10-15 detik (bcrypt memeriksa 10 PIN aktif sequential, ~2.3s/hash) — perilaku backend existing, bukan bagian perubahan ini; UI benar menampilkan loading & tetap di v-pin selama menunggu.
+D-pad/keyboard: engine fokus tidak diubah; focusables() hanya elemen offsetParent !== null sehingga sidebar hidden tak memicu fokus mati (nav 7 menu terverifikasi saat auth).
 
 
 Laporan — Desain Admin Panel MovieBox TV

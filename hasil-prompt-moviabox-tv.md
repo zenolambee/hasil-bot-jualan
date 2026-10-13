@@ -2,6 +2,33 @@
 
 
 
+
+Laporan — Source Profiles, PIN Login & Hide Source — SELESAI (commit f3f5391, pushed ke PR #40)
+1. Penyebab asli "sumber tidak muncul setelah login ulang"
+Halaman PIN dulu tidak pernah memuat daftar sumber dari backend — tidak ada halaman pilih profil; frontend hanya bergantung pada sesi/state browser. Kini: init() tanpa sesi → halaman "Pilih Profil" yang selalu memuat ulang daftar dari GET /b/sources setiap kali dibuka (tidak pakai localStorage/sessionStorage/cache).
+
+2. File diubah & migration
+backend/app.py: kolom baru sources.visible (INTEGER DEFAULT 1) + sources.updated_at via _migrate_db() idempoten (ALTER TABLE, bukan reset) — terbukti: 32 sumber lama tetap ada, api_key terisi semua, visible=1 default. Endpoint: GET /b/sources kini WHERE active=1 AND visible=1 + error 503 (bukan array kosong) saat DB error; PATCH /b/admin/sources/<sid> menerima visible + set updated_at; DELETE menonaktifkan PIN terkait + info pins_disabled; create set visible=1, updated_at.
+tvplay/index.html: halaman "Pilih Profil" ala Netflix (kartu profil: ikon warna per UI Profile + nama sumber + nama profile; loading spinner; empty & error state; responsif; D-pad data-f). Alur: pilih kartu → chooseProfile(sourceId) → halaman PIN (judul = nama sumber) → aktivasi; sourceId dikirim sebagai hint — server tetap memvalidasi.
+tvplay/admin.html: kolom "Profil publik" (show/hide) + tombol Hide/Show per sumber (toggleSrcVisible → PATCH visible).
+3. Show/Hide & PIN-profile
+Show/Hide: tampil di publik hanya jika active=1 AND visible=1; hide tidak menyentuh konfigurasi/API Key/PIN; unhide menampilkan kembali; bukan mekanisme otorisasi (PIN tetap divalidasi).
+Validasi binding (pin_activate): bila sourceId dikirim frontend dan tidak sama dengan sumber PIN → 403 "PIN tidak terhubung dengan profil yang dipilih." — bukti ID diganti ditolak.
+PIN sementara/permanen: struktur ada (expires_at NULL = permanen, diisi = sementara) — dipertahankan; PIN permanen tetap valid sampai dicabut/nonaktif.
+4. Hasil pengujian (nyata)
+Uji	Hasil
+Migration: sumber lama + API Key utuh	✅ 32/32 terisi
+Sumber tampil setelah login ulang (load ulang dari backend)	✅
+Hide tidak muncul di publik; Show aktif muncul	✅ ProfShow ada / ProfHide tak ada
+API Key tidak bocor di respons publik	✅
+PIN hanya mengaktifkan sumber terikat (ID diganti → 403)	✅
+Edit tanpa key → API Key lama tetap	✅ (len>0)
+Non-admin kelola sumber → 401	✅
+Dominasi DOM test: 20 kartu profil render, klik → PIN tampil dengan nama sumber	✅
+Regression: admin 59/59, web 29/29, db 10/10, sintaks + node --check OK	✅
+5. Sisa blocker
+PostgreSQL integration & browser E2E Playwright tetap NOT RUN (lingkungan tidak tersedia); deploy VPS tidak dikerjakan (sesi batasan prompt). Tidak ada fitur lama yang dihapus — pencarian/katalog/player/streaming utuh.
+
 Laporan Final — Freeze Source, Full Test, Local Deploy, Uji Web Admin
 FASE 1 — Freeze & Backup
 Repo benar: E:/Repo Github/moviebox-tv = zenolambee/moviebox-tv; branch feature/web-pin-api-e2e; baseline HEAD d693bf3, working tree clean (tidak ada reset/destruktif).

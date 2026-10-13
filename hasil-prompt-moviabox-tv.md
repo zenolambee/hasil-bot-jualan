@@ -1,6 +1,45 @@
 
 
 
+
+Laporan Final — Freeze Source, Full Test, Local Deploy, Uji Web Admin
+FASE 1 — Freeze & Backup
+Repo benar: E:/Repo Github/moviebox-tv = zenolambee/moviebox-tv; branch feature/web-pin-api-e2e; baseline HEAD d693bf3, working tree clean (tidak ada reset/destruktif).
+Snapshot baseline: moviebox-tv-20261013-073105.zip (188 entri, git archive HEAD — hanya tracked files, tanpa .env/db/log) — SHA-256 8DD97852...67ADC.
+Backup akhir: moviebox-tv-final-20261013-074714.zip — SHA-256 4750FA31...C1926.
+Restore: Expand-Archive <zip> <tujuan> (arsip bisa dibaca, terverifikasi).
+Laporan baseline: reports/local-final-test.md (dibuat, tidak menimpa dokumentasi lain).
+FASE 2 — Audit & daftar bug
+Lokal == origin @ d693bf3 (sinkron); 8 commit di PR #40 (stacked, tidak merge/rebase); PR #39 (Wasmer) terpisah, tidak disentuh.
+P0/P1: tidak ditemukan. P2: global DNS monkeypatch race → diperbaiki. P3: tanpa batas ukuran respons → diperbaiki.
+FASE 3 — Perbaikan backend (commit 1688fd8, pushed)
+DNS pinning per-call race-free: monkeypatch global socket.getaddrinfo diganti koneksi http.client langsung ke IP terverifikasi; TLS manual wrap_socket(server_hostname=host) — SNI + sertifikat tetap divalidasi, anti rebind, tanpa state global bersama.
+Batas 8 MB respons provider (MAX_BODY) — proteksi memori.
+Verifikasi: 5 concurrent pinned requests paralel → semua 200 (race-free).
+FASE 4 — Automated test (nyata)
+Test	Hasil
+Sintaks Python (5 modul) + node --check ×2	PASS
+test_admin_e2e.py	59/59 PASS
+test_web_e2e.py	29/29 PASS
+test_db.py	10/10 SQLite PASS
+PostgreSQL	BLOCKED (tanpa TEST_DATABASE_URL)
+Playwright browser E2E	BLOCKED (tidak terpasang)
+FASE 5-7 — Jalankan aplikasi + uji web lokal
+Backend startup: PASS — waitress @ http://127.0.0.1:8000; /b/health 200, /b/ready 200; proses tetap aktif (bukan hanya command tanpa error).
+Browser access (HTTP nyata): PASS — homepage + admin.html 200, route asing 404; viewport meta OK (desktop/mobile); alur diuji via HTTP integration request nyata, bukan curl-klaim browser test.
+Admin login/logout: PASS (login salah→401, benar→200 + cookie HttpOnly/same-origin; logout mencabut; tanpa sesi/header lama → 401).
+Dashboard: PASS (stats dari DB: sources/pins).
+CRUD Source: PASS (create/edit/test/delete 200; base URL berbahaya ditolak 400; error upstream tersanitasi).
+PIN lifecycle: PASS — TERBITKAN PIN smoke final = 32SB-9QMY (server-generated, sekali-tampil, hash-only), cabut revoked:true, aktivasi user 200.
+Security/error states: PASS (CSRF 403, session dicabut, tanpa password/API key/stack trace di respons).
+URL lokal teruji: http://127.0.0.1:8000/ dan /admin.html. Akses HP LAN tidak diuji (binding tetap 127.0.0.1 — aman).
+FASE 8 — Status commit & langkah manual
+File berubah: backend/app.py (pin per-call + TLS man + 8 MB cap), reports/local-final-test.md — committed 1688fd8, pushed d693bf3..1688fd8 ke PR #40 (tidak merge).
+Error tersisa: tidak ada yang gagal karena kode; BLOCKED: PostgreSQL (TEST_DATABASE_URL tidak ada), Playwright (tidak terpasang), deploy VPS (port 22 kedua host timeout — bukti log SSH fase sebelumnya).
+Langkah manual tersisa untuk pengguna: (1) buka http://127.0.0.1:8000/admin.html di browser visual (server masih hidup) dengan password admin lokal untuk verifikasi tampilan; (2) sediakan TEST_DATABASE_URL untuk postgres integration; (3) aktifkan akses SSH VPS untuk deploy produksi.
+Definition of Done: ✅ backup + checksum, ✅ regression & build lulus, ✅ backend berjalan, ✅ web+API teruji end-to-end, ✅ alur admin login→logout teruji, ✅ laporan berisi hasil nyata tanpa klaim palsu.
+
+
 Laporan Akhir — Finalize Local Code, Full Testing, Deployment, Admin Panel & Web Access
 1. Source code laptop
 Backup: C:\Users\ACER\AppData\Local\Temp\opencode\moviebox-tv-backup — 1471 file (backend/, tvplay/, docs/, dll). Dikecualikan: .git/, .venv/, moviebox.db, __pycache__/, http.log. Tidak ada .env/key di repo (diverifikasi).

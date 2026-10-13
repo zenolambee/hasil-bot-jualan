@@ -3,6 +3,40 @@
 
 
 
+
+
+
+Laporan — Desain Admin Panel MovieBox TV
+Keterbatasan referensi (jujur)
+hasil-prompt-moviabox-tv.md TIDAK DITEMUKAN — dicari di repo, E:\Repo Github, Desktop/Downloads/Dokumen: tidak ada.
+Design Mode (Moda) tidak dapat diakses — tidak ada artefak/screenshot Design Mode di repo. Referensi yang tersedia: design token Moda di tvplay/index.html (Midnight Navy system, sudah terverifikasi mengikuti "MovieBox TV — Redesign UI") + DOM snapshot halaman user. Admin dibandingkan terhadap token itu — BELUM dibandingkan dengan Design Mode langsung.
+Playwright tidak terpasang → screenshot berupa DOM snapshot HTML per state (bukan PNG), di C:\Users\ACER\AppData\Local\Temp\opencode\domtest\shots\ (9 file).
+Perbedaan desain yang ditemukan → diperbaiki
+Temuan	Perbaikan
+Pengaturan tema admin belum ada (palet hardcoded, font system-ui)	Dropdown Tema Admin Panel di header: Midnight Navy / Slate Blue / Noir Amber, persist localStorage.mbtv_admin_theme, data-admin-theme terpisah dari data-theme UI Profile
+Form Tambah/Edit Source inline, bukan modal	Modal overlay (klik backdrop / ✕ / Batal menutup), fokus trapping via ESC tak diperlukan karena semua tombol ada
+Konfirmasi cabut PIN pakai confirm() native	Modal konfirmasi kustom merah
+Dashboard punya tabel "PIN Terbaru" duplikatif dengan PIN Management; tab PIN dashboard tak konsisten	Hapus tabel PIN duplikat; tabel Source Terbaru + kolom Profil publik (show/hide)
+Page reload saat logout admin	location.reload() dipertahankan (sesi bersih), bukan desain issue
+who elemen tak pernah diisi	Diisi "Admin" setelah cek sesi
+Mojibake â† (panah)	←; tombol ＋ diperbaiki
+Typography/spacing: Judul tab & section inline style, tabel tanpa hover, input tanpa focus ring konsisten, hit area kecil di mobile	Font Inter, focus ring konsisten (box-shadow 3px), tab aktif berwarna pri, hover baris tabel, tabular-nums untuk angka stat & PIN, mobile: tombol modal full-width, header padding dikecilkan
+File diubah
+tvplay/admin.html — satu-satunya file (frontend saja, backend tidak disentuh).
+Validasi PIN-source, API Key, Hide/Show, autentikasi, streaming — semua logic dipertahankan, hanya markup/CSS/handler yang berubah.
+Pengujian yang benar-benar dijalankan
+test_admin_e2e.py → 59/59 PASS (setelah reset DB untuk lockout)
+test_web_e2e.py → 29/29 PASS (jalanan kedua setelah reset lockout IP; jalanan pertama gagal karena lockout, bukan kode)
+test_db.py → 10/10 PASS (SQLite; PostgreSQL di-skip tanpa TEST_DATABASE_URL)
+DOM test jsdom → 13/13 PASS (test_admin_visual: tema ganti+persist, dashboard, modal add/edit, modal revoke, kolom show/hide), test_admin_ui.js PASS (save via UI klik → backend nyata), test_admin_theme.js 7/7 PASS
+node --check JS inline → OK; pemeriksaan mojibake → bersih
+jsdom click-test halaman user (regresi) → PASS
+Contoh snapshot tersedia
+01-login, 02-dashboard, 03-source, 04-modal-add-source, 05-modal-edit-source, 06-pin, 07-modal-confirm-revoke, 08-keamanan, 09-dashboard-noir (tema berganti).
+
+
+
+
 Laporan — Source Profiles, PIN Login & Hide Source — SELESAI (commit f3f5391, pushed ke PR #40)
 1. Penyebab asli "sumber tidak muncul setelah login ulang"
 Halaman PIN dulu tidak pernah memuat daftar sumber dari backend — tidak ada halaman pilih profil; frontend hanya bergantung pada sesi/state browser. Kini: init() tanpa sesi → halaman "Pilih Profil" yang selalu memuat ulang daftar dari GET /b/sources setiap kali dibuka (tidak pakai localStorage/sessionStorage/cache).
